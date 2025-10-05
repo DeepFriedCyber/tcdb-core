@@ -1,0 +1,66 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "tcdb-core"
+version = "1.0.0"
+description = "Topological Data Analysis with Rust + Lean verification"
+authors = [{name = "DeepFriedCyber"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "flask>=2.3.0",
+    "flask-cors>=4.0.0",
+    "flask-limiter>=3.3.0",
+    "numpy>=1.21.0",
+    "scipy>=1.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "pytest-flask>=1.2.0",
+    "maturin>=1.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/DeepFriedCyber/tcdb-core"
+Repository = "https://github.com/DeepFriedCyber/tcdb-core"
+
+[tool.maturin]
+python-source = "python"
+module-name = "tcdb_core"
+bindings = "pyo3"
+features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
