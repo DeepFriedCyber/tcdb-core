@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopoPersist - Mathematically Verified AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Clerk Authentication SDK from CDN -->
+    <script
+        async
+        crossorigin="anonymous"
+        data-clerk-publishable-key="pk_test_ZW5vdWdoLWNpY2FkYS05Ny5jbGVyay5hY2NvdW50cy5kZXYk"
+        src="https://enough-cicada-97.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+        type="text/javascript"
+    ></script>
+
+    <style>
+        .gradient-text {
+            background: linear-gradient(to right, #9333ea, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold gradient-text">TopoPersist</div>
+                    <div class="ml-3 px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                        TDD Verified
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-purple-600 transition">Features</a>
+                    <a href="#api" class="text-gray-700 hover:text-purple-600 transition">API</a>
+                    <a href="#use-cases" class="text-gray-700 hover:text-purple-600 transition">Use Cases</a>
+                    <a href="#pricing" class="text-gray-700 hover:text-purple-600 transition">Pricing</a>
+                </div>
+                <div class="flex space-x-4">
+                    <!-- Show when not signed in -->
+                    <div id="auth-buttons-signed-out" class="flex space-x-4">
+                        <button id="sign-in-btn" class="px-4 py-2 text-purple-600 hover:text-purple-700 font-medium">Sign In</button>
+                        <button id="sign-up-btn" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition">Get API Access</button>
+                    </div>
+                    <!-- Show when signed in -->
+                    <div id="auth-buttons-signed-in" class="hidden flex space-x-4 items-center">
+                        <span id="user-email" class="text-gray-700 text-sm"></span>
+                        <button id="dashboard-btn" class="px-4 py-2 text-purple-600 hover:text-purple-700 font-medium">Dashboard</button>
+                        <button id="sign-out-btn" class="px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+            <div class="text-center">
+                <h1 class="text-5xl md:text-6xl font-bold mb-6">
+                    Mathematically Verified AI<br>
+                    <span class="text-purple-200">For Critical Applications</span>
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 text-purple-100 max-w-3xl mx-auto">
+                    Topological persistence + formal verification = rock-solid knowledge graphs for research, cybersecurity, and finance
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="window.location.href='/docs'" class="px-8 py-4 bg-white text-purple-600 rounded-lg font-bold text-lg hover:shadow-2xl transition transform hover:scale-105">
+                        Try Live Demo
+                    </button>
+                    <button onclick="window.open('https://github.com/yourusername/topopersist', '_blank')" class="px-8 py-4 bg-purple-800 text-white rounded-lg font-bold text-lg hover:bg-purple-900 transition">
+                        View Documentation
+                    </button>
+                </div>
+                <div class="mt-12 flex flex-wrap justify-center gap-8 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="text-green-300">✓</span>
+                        <span>100% TDD Coverage</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-green-300">✓</span>
+                        <span>Formal Verification</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-green-300">✓</span>
+                        <span>REST API Ready</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="bg-white py-12 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-4xl font-bold text-purple-600">7</div>
+                    <div class="text-gray-600 mt-2">Integrated Modules</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600"><100ms</div>
+                    <div class="text-gray-600 mt-2">API Response</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600">100%</div>
+                    <div class="text-gray-600 mt-2">TDD Coverage</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600">$49</div>
+                    <div class="text-gray-600 mt-2">Starting Price/mo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Components Section -->
+    <div class="py-20 bg-gradient-to-br from-gray-50 to-purple-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Complete Platform Suite</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Seven integrated components providing topological analysis, trading signals, payments, and analytics
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Core TDD API -->
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition border-2 border-purple-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-white text-2xl">🔬</span>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Core TDD API</h3>
+                            <span class="text-sm text-purple-600 font-semibold">Port 8000 • Running</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        REST API for topological data analysis with Clerk authentication, pipeline execution, and module management.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Flask</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">GUDHI</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">Clerk Auth</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">100% TDD</span>
+                    </div>
+                    <a href="/docs" class="text-purple-600 hover:text-purple-700 font-semibold">View API Docs →</a>
+                </div>
+
+                <!-- Trading Signals -->
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition border-2 border-green-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-white text-2xl">📈</span>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Trading Signals</h3>
+                            <span class="text-sm text-green-600 font-semibold">Port 8001 • Ready</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Real-time FX trading signals with MetaTrader 5 bridge and TradingView webhook integration.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">FastAPI</span>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">MT5 Bridge</span>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">Webhooks</span>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">Docker</span>
+                    </div>
+                    <a href="http://localhost:8001/docs" class="text-green-600 hover:text-green-700 font-semibold">View Signals API →</a>
+                </div>
+
+                <!-- Streaming Engine -->
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition border-2 border-orange-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-white text-2xl">⚡</span>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Streaming Engine</h3>
+                            <span class="text-sm text-orange-600 font-semibold">Port 8002 • Ready</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        High-performance flash crash detection using streaming persistent homology with Rust core.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-3 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">Rust</span>
+                        <span class="px-3 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">PyO3</span>
+                        <span class="px-3 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">Real-time</span>
+                        <span class="px-3 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">React UI</span>
+                    </div>
+                    <span class="text-orange-600 font-semibold">Flash Crash Detection</span>
+                </div>
+
+                <!-- Knowledge Graph TDA -->
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition border-2 border-blue-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-white text-2xl">🧠</span>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Knowledge Graph TDA</h3>
+                            <span class="text-sm text-blue-600 font-semibold">Research Module</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        TDD-based knowledge graph with topological analysis, embeddings, and downstream classification.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Python</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">GUDHI</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">scikit-learn</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Modular</span>
+                    </div>
+                    <span class="text-blue-600 font-semibold">Research Ready</span>
+                </div>
+
+                <!-- Performance Dashboard -->
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition border-2 border-indigo-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-white text-2xl">📊</span>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Performance Dashboard</h3>
+                            <span class="text-sm text-indigo-600 font-semibold">Port 3000 • Ready</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Beautiful React dashboard for visualizing trading performance, signal accuracy, and aggregate insights.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full">React 18</span>
+                        <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full">Recharts</span>
+                        <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full">TailwindCSS</span>
+                        <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full">React Query</span>
+                    </div>
+                    <span class="text-indigo-600 font-semibold">Analytics & Insights</span>
+                </div>
+
+                <!-- Stripe Integration -->
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition border-2 border-pink-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-pink-600 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-white text-2xl">💳</span>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Stripe Integration</h3>
+                            <span class="text-sm text-pink-600 font-semibold">Payments • Ready</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Complete subscription payment system with Free, Pro ($49/mo), and Team ($199/mo) tiers.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs rounded-full">Stripe API</span>
+                        <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs rounded-full">Webhooks</span>
+                        <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs rounded-full">Checkout</span>
+                        <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs rounded-full">Portal</span>
+                    </div>
+                    <span class="text-pink-600 font-semibold">Monetization Ready</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Why TopoPersist?</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Built from the ground up with mathematical rigor and enterprise reliability
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-purple-600 text-2xl">📊</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Topological Persistence</h3>
+                    <p class="text-gray-600">
+                        Advanced TDA with Rips complexes, persistent homology, and streaming algorithms for robust data representation
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-indigo-600 text-2xl">✓</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Formal Verification</h3>
+                    <p class="text-gray-600">
+                        Core invariants validated at every step. No hallucinations, no drift - just mathematically guaranteed results
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-blue-600 text-2xl">💻</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Test-Driven Development</h3>
+                    <p class="text-gray-600">
+                        Every feature tested before implementation. 100% coverage ensures reliability for mission-critical applications
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-green-600 text-2xl">📈</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Trading Signals</h3>
+                    <p class="text-gray-600">
+                        Real-time FX signals with MT5 integration and TradingView webhooks for algorithmic trading applications
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-orange-600 text-2xl">⚡</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Flash Crash Detection</h3>
+                    <p class="text-gray-600">
+                        High-performance Rust core with streaming persistent homology for real-time market anomaly detection
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-red-600 text-2xl">🛡️</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Enterprise Security</h3>
+                    <p class="text-gray-600">
+                        Clerk authentication, rate limiting, input validation, and audit logging for compliance-ready deployments
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Section -->
+    <div id="api" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">REST API Access</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Integrate TopoPersist into your workflow with our simple, powerful API
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-8 rounded-xl">
+                    <h3 class="text-2xl font-bold mb-4">Quick Start</h3>
+                    <div class="bg-gray-900 text-green-400 p-6 rounded-lg font-mono text-sm overflow-x-auto">
+                        <div class="mb-2 text-gray-500"># Install client</div>
+                        <div class="mb-4">pip install topopersist-client</div>
+                        <div class="mb-2 text-gray-500"># Run pipeline</div>
+                        <div>curl -X POST https://api.topopersist.io/v1/pipeline/run \</div>
+                        <div class="ml-4">-H "Authorization: Bearer YOUR_TOKEN" \</div>
+                        <div class="ml-4">-H "Content-Type: application/json" \</div>
+                        <div class="ml-4">-d '{"data": [[1,2,3]], "tda_module": "rips"}'</div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-xl">
+                    <h3 class="text-2xl font-bold mb-4">Key Endpoints</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <div class="px-3 py-1 bg-green-100 text-green-700 rounded font-mono text-xs font-bold">GET</div>
+                            <div>
+                                <div class="font-mono text-sm">/v1/health</div>
+                                <div class="text-gray-600 text-sm">Health check</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="px-3 py-1 bg-blue-100 text-blue-700 rounded font-mono text-xs font-bold">POST</div>
+                            <div>
+                                <div class="font-mono text-sm">/v1/pipeline/run</div>
+                                <div class="text-gray-600 text-sm">Execute TDD pipeline</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="px-3 py-1 bg-green-100 text-green-700 rounded font-mono text-xs font-bold">GET</div>
+                            <div>
+                                <div class="font-mono text-sm">/v1/results/:id</div>
+                                <div class="text-gray-600 text-sm">Retrieve results</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="px-3 py-1 bg-green-100 text-green-700 rounded font-mono text-xs font-bold">GET</div>
+                            <div>
+                                <div class="font-mono text-sm">/v1/modules</div>
+                                <div class="text-gray-600 text-sm">List available modules</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 text-white p-8 rounded-xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold">Python Example</h3>
+                    <button class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm transition">Copy Code</button>
+                </div>
+                <pre class="text-green-400 font-mono text-sm overflow-x-auto">import requests
+import numpy as np
+
+API_URL = "https://api.topopersist.io/v1"
+TOKEN = "your_api_token_here"
+
+# Generate sample data
+X = np.random.rand(50, 3).tolist()
+y = np.random.randint(0, 2, 50).tolist()
+
+# Run pipeline
+response = requests.post(
+    f"{API_URL}/pipeline/run",
+    json={
+        "data": X,
+        "labels": y,
+        "embedding_module": "standard",
+        "tda_module": "rips",
+        "downstream_module": "classifier"
+    },
+    headers={"Authorization": f"Bearer {TOKEN}"}
+)
+
+result = response.json()
+print(f"Job ID: {result['job_id']}")
+print(f"Features: {result['features']}")
+print(f"Accuracy: {result['downstream_scores']['mean_accuracy']}")</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Cases Section -->
+    <div id="use-cases" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Built for Critical Applications</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Where accuracy and reliability are non-negotiable
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                        <span class="text-blue-600 text-3xl">🔬</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Research</h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Reproducible results with formal guarantees</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Citation-ready mathematical proofs</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Benchmark competing approaches safely</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                        <span class="text-red-600 text-3xl">🔒</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Cybersecurity</h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Threat detection without false positives</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Anomaly detection with topological features</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Audit trails for compliance</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                        <span class="text-green-600 text-3xl">📈</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Finance & Trading</h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Real-time FX signals with MT5 integration</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Flash crash detection with streaming homology</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Risk modeling with verified stability</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>TradingView webhook integration</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Section -->
+    <div id="pricing" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Start free, scale as you grow</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white border-2 border-gray-200 rounded-xl p-8">
+                    <h3 class="text-2xl font-bold mb-2">Research</h3>
+                    <div class="text-4xl font-bold mb-6">Free</div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>1,000 API calls/month</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>All core modules</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Community support</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Public documentation</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 border-2 border-purple-600 text-purple-600 rounded-lg font-bold hover:bg-purple-50 transition">
+                        Get Started
+                    </button>
+                </div>
+
+                <div class="bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-xl p-8 transform scale-105 shadow-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-2xl font-bold">Professional</h3>
+                        <span class="px-3 py-1 bg-white text-purple-600 text-xs font-bold rounded-full">POPULAR</span>
+                    </div>
+                    <div class="text-4xl font-bold mb-6">$299<span class="text-xl">/mo</span></div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>100,000 API calls/month</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>Advanced TDA modules</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>Priority support</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>Custom module testing</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>99.9% SLA</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 bg-white text-purple-600 rounded-lg font-bold hover:shadow-lg transition">
+                        Start Free Trial
+                    </button>
+                </div>
+
+                <div class="bg-white border-2 border-gray-200 rounded-xl p-8">
+                    <h3 class="text-2xl font-bold mb-2">Enterprise</h3>
+                    <div class="text-4xl font-bold mb-6">Custom</div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Unlimited API calls</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>On-premise deployment</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Dedicated support team</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Custom module development</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>SOC 2 compliance</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 border-2 border-purple-600 text-purple-600 rounded-lg font-bold hover:bg-purple-50 transition">
+                        Contact Sales
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 py-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold text-white mb-6">Ready to Build Rock-Solid AI?</h2>
+            <p class="text-xl text-purple-100 mb-8">
+                Join researchers, security teams, and financial institutions using TopoPersist
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button class="px-8 py-4 bg-white text-purple-600 rounded-lg font-bold text-lg hover:shadow-2xl transition">
+                    Get API Access
+                </button>
+                <button class="px-8 py-4 bg-purple-800 text-white rounded-lg font-bold text-lg hover:bg-purple-900 transition">
+                    Schedule Demo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="text-white font-bold text-xl mb-4">TopoPersist</div>
+                    <p class="text-sm">Mathematically verified AI for critical applications</p>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Product</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition">Features</a></li>
+                        <li><a href="#" class="hover:text-white transition">API Docs</a></li>
+                        <li><a href="#" class="hover:text-white transition">Pricing</a></li>
+                        <li><a href="#" class="hover:text-white transition">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Resources</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="hover:text-white transition">Tutorials</a></li>
+                        <li><a href="#" class="hover:text-white transition">Research Papers</a></li>
+                        <li><a href="#" class="hover:text-white transition">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Company</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition">About</a></li>
+                        <li><a href="#" class="hover:text-white transition">Contact</a></li>
+                        <li><a href="#" class="hover:text-white transition">Privacy</a></li>
+                        <li><a href="#" class="hover:text-white transition">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-sm">
+                © 2025 TopoPersist. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Authentication Script -->
+    <script>
+        const API_BASE = window.location.origin;
+        let clerkInstance = null;
+        let clerkPublishableKey = null;
+
+        // Wait for Clerk to load
+        function waitForClerk() {
+            return new Promise((resolve) => {
+                if (window.Clerk) {
+                    resolve(window.Clerk);
+                } else {
+                    const checkClerk = setInterval(() => {
+                        if (window.Clerk) {
+                            clearInterval(checkClerk);
+                            resolve(window.Clerk);
+                        }
+                    }, 100);
+
+                    // Timeout after 5 seconds
+                    setTimeout(() => {
+                        clearInterval(checkClerk);
+                        resolve(null);
+                    }, 5000);
+                }
+            });
+        }
+
+        // Fetch Clerk configuration from backend
+        async function initializeAuth() {
+            try {
+                // Get Clerk publishable key from backend
+                const response = await fetch(`${API_BASE}/api/v1/auth/config`);
+                const config = await response.json();
+                clerkPublishableKey = config.publishable_key;
+
+                console.log('Clerk config loaded:', clerkPublishableKey);
+
+                // Check if we're in development mode (no Clerk configured)
+                if (!clerkPublishableKey || clerkPublishableKey === 'not_configured') {
+                    console.log('Development mode: Clerk not configured');
+                    setupDevMode();
+                    return;
+                }
+
+                // Wait for Clerk SDK to load
+                const Clerk = await waitForClerk();
+
+                if (Clerk) {
+                    console.log('Clerk SDK loaded, initializing...');
+                    clerkInstance = Clerk;
+
+                    await clerkInstance.load({
+                        publishableKey: clerkPublishableKey
+                    });
+
+                    console.log('Clerk initialized successfully');
+
+                    // Check authentication state
+                    updateAuthUI();
+
+                    // Listen for auth state changes
+                    clerkInstance.addListener(({ session }) => {
+                        console.log('Auth state changed:', session ? 'signed in' : 'signed out');
+                        updateAuthUI();
+                    });
+                } else {
+                    console.error('Clerk SDK failed to load after 5 seconds');
+                    setupDevMode();
+                }
+            } catch (error) {
+                console.error('Error initializing auth:', error);
+                setupDevMode();
+            }
+        }
+
+        // Update UI based on authentication state
+        function updateAuthUI() {
+            const signedOutButtons = document.getElementById('auth-buttons-signed-out');
+            const signedInButtons = document.getElementById('auth-buttons-signed-in');
+            const userEmail = document.getElementById('user-email');
+
+            if (clerkInstance && clerkInstance.session) {
+                // User is signed in
+                signedOutButtons.classList.add('hidden');
+                signedInButtons.classList.remove('hidden');
+
+                const email = clerkInstance.user?.primaryEmailAddress?.emailAddress || 'User';
+                userEmail.textContent = email;
+            } else {
+                // User is signed out
+                signedOutButtons.classList.remove('hidden');
+                signedInButtons.classList.add('hidden');
+            }
+        }
+
+        // Development mode (no Clerk)
+        function setupDevMode() {
+            console.log('Running in development mode');
+
+            document.getElementById('sign-in-btn').addEventListener('click', () => {
+                alert('Development Mode:\n\nClerk is not configured. To test the API:\n\n1. Use any token starting with "test_"\n2. Example: Authorization: Bearer test_dev_token\n3. See CLERK_SETUP.md for production setup');
+            });
+
+            document.getElementById('sign-up-btn').addEventListener('click', () => {
+                alert('Development Mode:\n\nTo set up authentication:\n\n1. Sign up at https://clerk.com\n2. Create a new application\n3. Add keys to .env file\n4. See CLERK_SETUP.md for details');
+            });
+        }
+
+        // Button event handlers
+        document.getElementById('sign-in-btn')?.addEventListener('click', async () => {
+            if (clerkInstance) {
+                await clerkInstance.openSignIn();
+            }
+        });
+
+        document.getElementById('sign-up-btn')?.addEventListener('click', async () => {
+            if (clerkInstance) {
+                await clerkInstance.openSignUp();
+            }
+        });
+
+        document.getElementById('sign-out-btn')?.addEventListener('click', async () => {
+            if (clerkInstance) {
+                await clerkInstance.signOut();
+                updateAuthUI();
+            }
+        });
+
+        document.getElementById('dashboard-btn')?.addEventListener('click', async () => {
+            if (clerkInstance && clerkInstance.session) {
+                // Get session token
+                const token = await clerkInstance.session.getToken();
+
+                // Test API call
+                try {
+                    const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+                    alert(`Welcome!\n\nUser ID: ${data.user_id}\nEmail: ${data.email}\nTier: ${data.tier || 'free'}`);
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    alert('Error fetching user data. Check console for details.');
+                }
+            }
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', initializeAuth);
+    </script>
+</body>
+</html>
