@@ -1,0 +1,26 @@
+{
+  "name": "tcdb-api-worker",
+  "version": "1.0.0",
+  "description": "TCDB API Worker with TDD tests",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "deploy": "wrangler deploy --config wrangler-api.toml",
+    "dev": "wrangler dev --config wrangler-api.toml"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "@cloudflare/workers-types": "^4.0.0"
+  },
+  "keywords": [
+    "tcdb",
+    "topological-data-analysis",
+    "cloudflare-workers",
+    "tdd"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+
