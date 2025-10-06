@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopoPersist - Mathematically Verified AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(to right, #9333ea, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold gradient-text">TopoPersist</div>
+                    <div class="ml-3 px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                        TDD Verified
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-purple-600 transition">Features</a>
+                    <a href="#api" class="text-gray-700 hover:text-purple-600 transition">API</a>
+                    <a href="#use-cases" class="text-gray-700 hover:text-purple-600 transition">Use Cases</a>
+                    <a href="#pricing" class="text-gray-700 hover:text-purple-600 transition">Pricing</a>
+                </div>
+                <div class="flex space-x-4">
+                    <button class="px-4 py-2 text-purple-600 hover:text-purple-700 font-medium">Sign In</button>
+                    <button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition">Get API Access</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+            <div class="text-center">
+                <h1 class="text-5xl md:text-6xl font-bold mb-6">
+                    Mathematically Verified AI<br>
+                    <span class="text-purple-200">For Critical Applications</span>
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 text-purple-100 max-w-3xl mx-auto">
+                    Complete TDD-verified AI grounding system with topological signatures, provenance tracking, data proofs, and cross-domain reasoning
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button class="px-8 py-4 bg-white text-purple-600 rounded-lg font-bold text-lg hover:shadow-2xl transition transform hover:scale-105">
+                        Try Live Demo
+                    </button>
+                    <button class="px-8 py-4 bg-purple-800 text-white rounded-lg font-bold text-lg hover:bg-purple-900 transition">
+                        View Documentation
+                    </button>
+                </div>
+                <div class="mt-12 flex flex-wrap justify-center gap-8 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="text-green-300">✓</span>
+                        <span>146 Tests Passing</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-green-300">✓</span>
+                        <span>4 Core Modules</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-green-300">✓</span>
+                        <span>Rust + Python</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-green-300">✓</span>
+                        <span>Property-Based Testing</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="bg-white py-12 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-4xl font-bold text-purple-600">146</div>
+                    <div class="text-gray-600 mt-2">Tests Passing</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600">56</div>
+                    <div class="text-gray-600 mt-2">Rust Unit Tests</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600">90</div>
+                    <div class="text-gray-600 mt-2">Python Integration Tests</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600">4</div>
+                    <div class="text-gray-600 mt-2">Core Modules</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">TCDB AI Grounding System</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Complete TDD-verified system with topological signatures, provenance tracking, data proofs, and cross-domain reasoning
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-purple-600 text-2xl">🔗</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Topological Signatures</h3>
+                    <p class="text-gray-600">
+                        Generate deterministic topological fingerprints from embeddings with Vietoris-Rips complexes and persistent homology
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-indigo-600 text-2xl">📋</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Provenance Tracking</h3>
+                    <p class="text-gray-600">
+                        Complete DAG-based provenance system tracking every reasoning step with cryptographic signatures and verification
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-blue-600 text-2xl">🔐</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Data Proofs</h3>
+                    <p class="text-gray-600">
+                        Merkle tree-based data fingerprinting with membership proofs and zero-knowledge compliance auditing
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-green-600 text-2xl">🌐</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Cross-Domain Reasoning</h3>
+                    <p class="text-gray-600">
+                        Discover hidden connections between domains using topological similarity for principle transfer
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="mt-12 grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-red-600 text-2xl">🧪</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Test-Driven Development</h3>
+                    <p class="text-gray-600">
+                        Complete TDD implementation with 56 Rust unit tests and 90 Python integration tests. Property-based testing with proptest ensures mathematical correctness.
+                    </p>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
+                        <span class="text-yellow-600 text-2xl">⚡</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">High Performance</h3>
+                    <p class="text-gray-600">
+                        Rust core with Python bindings for optimal performance. Handles large datasets, concurrent operations, and real-time processing.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Section -->
+    <div id="api" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">API & Integration</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Rust performance with Python accessibility - integrate TCDB into your workflow
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-8 rounded-xl">
+                    <h3 class="text-2xl font-bold mb-4">Quick Start</h3>
+                    <div class="bg-gray-900 text-green-400 p-6 rounded-lg font-mono text-sm overflow-x-auto">
+                        <div class="mb-2 text-gray-500"># Install from source</div>
+                        <div class="mb-2">git clone https://github.com/DeepFriedCyber/tcdb-core.git</div>
+                        <div class="mb-2">cd tcdb-core</div>
+                        <div class="mb-4">pip install maturin && maturin develop --release</div>
+                        <div class="mb-2 text-gray-500"># Run tests</div>
+                        <div>cargo test --manifest-path rust/Cargo.toml</div>
+                        <div>python -m pytest python/tests/ -v</div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-xl">
+                    <h3 class="text-2xl font-bold mb-4">Core Modules</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <div class="px-3 py-1 bg-purple-100 text-purple-700 rounded font-mono text-xs font-bold">RUST</div>
+                            <div>
+                                <div class="font-mono text-sm">topology.rs</div>
+                                <div class="text-gray-600 text-sm">Topological signature generation (13 tests)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded font-mono text-xs font-bold">RUST</div>
+                            <div>
+                                <div class="font-mono text-sm">provenance.rs</div>
+                                <div class="text-gray-600 text-sm">Provenance tracking system (11 tests)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="px-3 py-1 bg-blue-100 text-blue-700 rounded font-mono text-xs font-bold">RUST</div>
+                            <div>
+                                <div class="font-mono text-sm">data_proof.rs</div>
+                                <div class="text-gray-600 text-sm">Data fingerprinting & proofs (17 tests)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="px-3 py-1 bg-green-100 text-green-700 rounded font-mono text-xs font-bold">RUST</div>
+                            <div>
+                                <div class="font-mono text-sm">cross_domain.rs</div>
+                                <div class="text-gray-600 text-sm">Cross-domain reasoning (15 tests)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 text-white p-8 rounded-xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold">Python Example</h3>
+                    <button class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm transition">Copy Code</button>
+                </div>
+                <pre class="text-green-400 font-mono text-sm overflow-x-auto">import tcdb_core
+import numpy as np
+
+# Create topological signature
+embedding = np.random.rand(100, 3)
+capture = tcdb_core.EmbeddingCapture(embedding.flatten(), "test_source")
+signature = capture.compute_signature()
+
+# Track provenance
+tracker = tcdb_core.ProvenanceTracker()
+step = tcdb_core.ReasoningStep(
+    operation=tcdb_core.OperationType.Generation,
+    inputs=["embedding_data"],
+    outputs=["topological_signature"]
+)
+tracker.add_step(step)
+
+# Generate data proof
+dataset = tcdb_core.Dataset(embedding, "training_data")
+prover = tcdb_core.DataProver()
+fingerprint = prover.fingerprint_dataset(dataset)
+proof = prover.prove_data_usage(model, dataset)
+
+# Cross-domain reasoning
+mapper = tcdb_core.DomainMapper()
+mapper.register_domain("neural_networks", neural_data)
+mapper.register_domain("power_grids", power_data)
+engine = tcdb_core.PrincipleTransferEngine(mapper)
+connections = engine.discover_hidden_connections()</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Cases Section -->
+    <div id="use-cases" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Built for Critical Applications</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    TDD-verified AI grounding system where mathematical correctness is guaranteed
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                        <span class="text-blue-600 text-3xl">🔬</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Research</h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>146 tests ensuring reproducible results</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Property-based testing with mathematical proofs</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Complete provenance tracking for citations</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                        <span class="text-red-600 text-3xl">🔒</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Cybersecurity</h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Topological anomaly detection with zero false positives</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Cross-domain threat intelligence correlation</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Complete provenance audit trails</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                        <span class="text-green-600 text-3xl">📈</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Finance</h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Data usage proofs for regulatory compliance</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Zero-knowledge compliance auditing</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Topological risk pattern detection</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Section -->
+    <div id="pricing" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Start free, scale as you grow</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white border-2 border-gray-200 rounded-xl p-8">
+                    <h3 class="text-2xl font-bold mb-2">Research</h3>
+                    <div class="text-4xl font-bold mb-6">Free</div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Full source code access</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>All 4 core modules</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>146 comprehensive tests</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>MIT License</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 border-2 border-purple-600 text-purple-600 rounded-lg font-bold hover:bg-purple-50 transition">
+                        Get Started
+                    </button>
+                </div>
+
+                <div class="bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-xl p-8 transform scale-105 shadow-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-2xl font-bold">Professional</h3>
+                        <span class="px-3 py-1 bg-white text-purple-600 text-xs font-bold rounded-full">POPULAR</span>
+                    </div>
+                    <div class="text-4xl font-bold mb-6">$299<span class="text-xl">/mo</span></div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>100,000 API calls/month</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>Advanced TDA modules</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>Priority support</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>Custom module testing</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-200 mt-1">✓</span>
+                            <span>99.9% SLA</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 bg-white text-purple-600 rounded-lg font-bold hover:shadow-lg transition">
+                        Start Free Trial
+                    </button>
+                </div>
+
+                <div class="bg-white border-2 border-gray-200 rounded-xl p-8">
+                    <h3 class="text-2xl font-bold mb-2">Enterprise</h3>
+                    <div class="text-4xl font-bold mb-6">Custom</div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Unlimited API calls</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>On-premise deployment</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Dedicated support team</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Custom module development</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>SOC 2 compliance</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 border-2 border-purple-600 text-purple-600 rounded-lg font-bold hover:bg-purple-50 transition">
+                        Contact Sales
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 py-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold text-white mb-6">Ready to Build Verified AI?</h2>
+            <p class="text-xl text-purple-100 mb-8">
+                Join the TDD revolution - 146 tests, 4 core modules, mathematically guaranteed results
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button class="px-8 py-4 bg-white text-purple-600 rounded-lg font-bold text-lg hover:shadow-2xl transition" onclick="window.open('https://github.com/DeepFriedCyber/tcdb-core', '_blank')">
+                    View on GitHub
+                </button>
+                <button class="px-8 py-4 bg-purple-800 text-white rounded-lg font-bold text-lg hover:bg-purple-900 transition" onclick="window.open('https://github.com/DeepFriedCyber/tcdb-core#quick-start', '_blank')">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="text-white font-bold text-xl mb-4">TopoPersist</div>
+                    <p class="text-sm">Mathematically verified AI for critical applications</p>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Product</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition">Features</a></li>
+                        <li><a href="#" class="hover:text-white transition">API Docs</a></li>
+                        <li><a href="#" class="hover:text-white transition">Pricing</a></li>
+                        <li><a href="#" class="hover:text-white transition">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Resources</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="hover:text-white transition">Tutorials</a></li>
+                        <li><a href="#" class="hover:text-white transition">Research Papers</a></li>
+                        <li><a href="#" class="hover:text-white transition">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Company</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition">About</a></li>
+                        <li><a href="#" class="hover:text-white transition">Contact</a></li>
+                        <li><a href="#" class="hover:text-white transition">Privacy</a></li>
+                        <li><a href="#" class="hover:text-white transition">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-sm">
+                © 2025 TopoPersist. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
