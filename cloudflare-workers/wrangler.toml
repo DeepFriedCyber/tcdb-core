@@ -1,0 +1,27 @@
+name = "tcdb-auth"
+main = "auth-worker.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespaces for data storage
+[[kv_namespaces]]
+binding = "USERS"
+id = "your-users-kv-namespace-id"
+
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "your-sessions-kv-namespace-id"
+
+[[kv_namespaces]]
+binding = "AUTH_TOKENS"
+id = "your-auth-tokens-kv-namespace-id"
+
+[[kv_namespaces]]
+binding = "API_KEYS"
+id = "your-api-keys-kv-namespace-id"
+
+# Routes
+routes = [
+  { pattern = "tcdb.uk/api/auth/*", zone_name = "tcdb.uk" },
+  { pattern = "tcdb.uk/api/keys/*", zone_name = "tcdb.uk" }
+]
+
