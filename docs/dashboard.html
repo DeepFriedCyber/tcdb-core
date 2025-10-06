@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TopoPersist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(to right, #9333ea, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="/" class="text-2xl font-bold gradient-text">TopoPersist</a>
+                    <div class="ml-3 px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                        TDD Verified
+                    </div>
+                </div>
+                <div class="flex space-x-4">
+                    <span id="user-email" class="px-4 py-2 text-gray-700"></span>
+                    <button id="sign-out-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
+            <p class="text-gray-600">Manage your API keys and view usage statistics</p>
+        </div>
+
+        <!-- API Key Section -->
+        <div class="bg-white rounded-lg shadow-sm p-8 mb-6">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Your API Key</h2>
+                    <p class="text-gray-600">Use this key to authenticate your API requests</p>
+                </div>
+                <span id="plan-badge" class="px-4 py-2 bg-purple-100 text-purple-700 font-semibold rounded-lg">Free Plan</span>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-6 mb-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                        <div class="flex items-center space-x-4">
+                            <code id="api-key-display" class="text-lg font-mono text-gray-900 bg-white px-4 py-2 rounded border border-gray-300 flex-1">
+                                Loading...
+                            </code>
+                            <button 
+                                onclick="copyApiKey()"
+                                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center space-x-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button 
+                    onclick="regenerateApiKey()"
+                    class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                    Regenerate Key
+                </button>
+                <button 
+                    onclick="showApiDocs()"
+                    class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition font-medium"
+                >
+                    View API Documentation
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Start Guide -->
+        <div class="bg-white rounded-lg shadow-sm p-8 mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Quick Start</h2>
+            <p class="text-gray-600 mb-6">Get started with the TopoPersist API in minutes</p>
+
+            <div class="space-y-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-bold text-gray-900 mb-2">1. Install the SDK</h3>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto"><code>pip install tcdb-client</code></pre>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-bold text-gray-900 mb-2">2. Initialize the Client</h3>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto"><code>from tcdb import TCDBClient
+
+client = TCDBClient(api_key="<span id="api-key-example">your-api-key</span>")</code></pre>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-bold text-gray-900 mb-2">3. Make Your First Request</h3>
+                    <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto"><code>result = client.topological_signature(
+    data=your_data,
+    method="vietoris_rips"
+)
+print(result)</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage Stats (Placeholder) -->
+        <div class="bg-white rounded-lg shadow-sm p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Usage Statistics</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-purple-50 rounded-lg p-6">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">0</div>
+                    <div class="text-gray-600">API Calls Today</div>
+                </div>
+                <div class="bg-indigo-50 rounded-lg p-6">
+                    <div class="text-3xl font-bold text-indigo-600 mb-2">0</div>
+                    <div class="text-gray-600">Total API Calls</div>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-6">
+                    <div class="text-3xl font-bold text-blue-600 mb-2">∞</div>
+                    <div class="text-gray-600">Remaining Calls</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        API key copied to clipboard!
+    </div>
+
+    <script>
+        // Check authentication
+        const sessionToken = localStorage.getItem('tcdb_session');
+        if (!sessionToken) {
+            window.location.href = '/';
+        }
+
+        // Load user data
+        async function loadUserData() {
+            try {
+                const response = await fetch('https://tcdb.uk/api/keys', {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load user data');
+                }
+
+                const data = await response.json();
+                
+                // Display API key
+                document.getElementById('api-key-display').textContent = data.apiKey;
+                document.getElementById('api-key-example').textContent = data.apiKey;
+                
+                // Display plan
+                document.getElementById('plan-badge').textContent = data.plan.charAt(0).toUpperCase() + data.plan.slice(1) + ' Plan';
+                
+                // Display email
+                const userData = JSON.parse(localStorage.getItem('tcdb_user'));
+                if (userData && userData.email) {
+                    document.getElementById('user-email').textContent = userData.email;
+                }
+
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                localStorage.removeItem('tcdb_session');
+                localStorage.removeItem('tcdb_user');
+                window.location.href = '/';
+            }
+        }
+
+        // Copy API key to clipboard
+        function copyApiKey() {
+            const apiKey = document.getElementById('api-key-display').textContent;
+            navigator.clipboard.writeText(apiKey).then(() => {
+                showToast('API key copied to clipboard!');
+            });
+        }
+
+        // Regenerate API key
+        async function regenerateApiKey() {
+            if (!confirm('Are you sure you want to regenerate your API key? Your old key will stop working immediately.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('https://tcdb.uk/api/keys/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to regenerate key');
+                }
+
+                const data = await response.json();
+                document.getElementById('api-key-display').textContent = data.apiKey;
+                document.getElementById('api-key-example').textContent = data.apiKey;
+                showToast('New API key generated!');
+
+            } catch (error) {
+                alert('Failed to regenerate API key: ' + error.message);
+            }
+        }
+
+        // Show API documentation
+        function showApiDocs() {
+            window.open('https://github.com/DeepFriedCyber/tcdb-core', '_blank');
+        }
+
+        // Sign out
+        document.getElementById('sign-out-btn').addEventListener('click', () => {
+            localStorage.removeItem('tcdb_session');
+            localStorage.removeItem('tcdb_user');
+            window.location.href = '/';
+        });
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Load data on page load
+        loadUserData();
+    </script>
+</body>
+</html>
+
