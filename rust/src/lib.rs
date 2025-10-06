@@ -5,11 +5,19 @@
 pub mod simplicial_complex;
 pub mod filtration;
 pub mod persistent_homology;
+pub mod topology;
+pub mod provenance;
+pub mod data_proof;
+pub mod cross_domain;
 pub mod bindings;
 
 pub use simplicial_complex::{SimplicialComplex, Simplex};
 pub use filtration::{Filtration, FiltrationValue};
 pub use persistent_homology::{PersistentHomology, Barcode, PersistenceDiagram};
+pub use topology::{EmbeddingCapture, TopologicalSignature, VietorisRips};
+pub use provenance::{ProvenanceTracker, ReasoningStep, OperationType, ProvenanceGraph};
+pub use data_proof::{DataFingerprint, DataProver, ModelAuditor, Dataset};
+pub use cross_domain::{DomainMapper, PrincipleTransferEngine, DomainStructure};
 
 use thiserror::Error;
 

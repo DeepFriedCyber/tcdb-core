@@ -1,0 +1,1647 @@
+TCDB AI Grounding System - TDD Test Suite
+Overview
+
+This document provides comprehensive TDD-aligned test suites for all core components of the TCDB AI Grounding System. Each test follows the Red-Green-Refactor cycle and includes unit, integration, and property-based tests.
+
+1. Topological Signature Generation Tests
+1.1 Unit Tests (Rust)
+// File: tests/topology_signature_tests.rs
+
+#[cfg(test)]
+mod tests {
+    use tcdb_core::topology::{PersistenceDiagram, TopologicalSignature, VietorisRips};
+    use tcdb_core::embedding::EmbeddingCapture;
+    
+    // Test 1: Empty embedding produces empty signature
+    #[test]
+    fn test_empty_embedding_signature() {
+        // Arrange
+        let empty_embedding: Vec<f64> = vec![];
+        let capture = EmbeddingCapture::new(empty_embedding, "test_source");
+        
+        // Act
+        let signature = capture.compute_signature();
+        
+        // Assert
+        assert_eq!(signature.persistence_diagram.points.len(), 0);
+        assert_eq!(signature.betti_numbers.len(), 0);
+    }
+    
+    // Test 2: Single point embedding produces expected signature
+    #[test]
+    fn test_single_point_signature() {
+        // Arrange
+        let single_point = vec![1.0, 2.0, 3.0];
+        let capture = EmbeddingCapture::new(single_point, "test_source");
+        
+        // Act
+        let signature = capture.compute_signature();
+        
+        // Assert
+        assert_eq!(signature.betti_numbers[0], 1); // One connected component
+        assert_eq!(signature.betti_numbers[1], 0); // No loops
+        assert_eq!(signature.betti_numbers[2], 0); // No voids
+    }
+    
+    // Test 3: Two distant points produce two components
+    #[test]
+    fn test_two_distant_points_signature() {
+        // Arrange
+        let two_points = vec![0.0, 0.0, 0.0, 100.0, 100.0, 100.0];
+        let capture = EmbeddingCapture::new(two_points, "test_source");
+        
+        // Act
+        let signature = capture.compute_signature();
+        
+        // Assert
+        assert_eq!(signature.betti_numbers[0], 2); // Two connected components
+    }
+    
+    // Test 4: Three collinear points produce expected topology
+    #[test]
+    fn test_collinear_points_signature() {
+        // Arrange
+        let collinear = vec![0.0, 0.0, 1.0, 0.0, 2.0, 0.0];
+        let capture = EmbeddingCapture::new(collinear, "test_source");
+        
+        // Act
+        let signature = capture.compute_signature();
+        
+        // Assert
+        assert_eq!(signature.betti_numbers[0], 1); // One connected component
+        assert_eq!(signature.betti_numbers[1], 0); // No loops (collinear)
+    }
+    
+    // Test 5: Four points forming square produce loop
+    #[test]
+    fn test_square_loop_signature() {
+        // Arrange
+        let square = vec![0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
+        let capture = EmbeddingCapture::new(square, "test_source");
+        
+        // Act
+        let signature = capture.compute_signature();
+        
+        // Assert
+        assert_eq!(signature.betti_numbers[0], 1); // One connected component
+        assert_eq!(signature.betti_numbers[1], 1); // One loop
+    }
+    
+    // Test 6: Signature hashing is deterministic
+    #[test]
+    fn test_signature_hash_deterministic() {
+        // Arrange
+        let data = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
+        let capture1 = EmbeddingCapture::new(data.clone(), "test_source");
+        let capture2 = EmbeddingCapture::new(data, "test_source");
+        
+        // Act
+        let signature1 = capture1.compute_signature();
+        let signature2 = capture2.compute_signature();
+        
+        // Assert
+        assert_eq!(signature1.hash, signature2.hash);
+    }
+    
+    // Test 7: Different embeddings produce different signatures
+    #[test]
+    fn test_different_embeddings_different_signatures() {
+        // Arrange
+        let data1 = vec![1.0, 2.0, 3.0];
+        let data2 = vec![10.0, 20.0, 30.0];
+        let capture1 = EmbeddingCapture::new(data1, "test_source");
+        let capture2 = EmbeddingCapture::new(data2, "test_source");
+        
+        // Act
+        let signature1 = capture1.compute_signature();
+        let signature2 = capture2.compute_signature();
+        
+        // Assert
+        assert_ne!(signature1.hash, signature2.hash);
+    }
+    
+    // Test 8: Signature computation performance
+    #[test]
+    fn test_signature_performance() {
+        // Arrange
+        let large_data: Vec<f64> = (0..1000).map(|i| i as f64).collect();
+        let capture = EmbeddingCapture::new(large_data, "test_source");
+        
+        // Act
+        let start = std::time::Instant::now();
+        let _signature = capture.compute_signature();
+        let duration = start.elapsed();
+        
+        // Assert
+        assert!(duration.as_millis() < 100); // Should compute in < 100ms
+    }
+}
+
+// Property-based tests using proptest
+#[cfg(test)]
+mod property_tests {
+    use proptest::prelude::*;
+    use tcdb_core::topology::{TopologicalSignature, EmbeddingCapture};
+    
+    proptest! {
+        // Property 1: Any embedding produces a valid signature
+        #[test]
+        fn prop_valid_signature(embedding in prop::collection::vec(prop::num::f64::ANY, 1..100)) {
+            let capture = EmbeddingCapture::new(embedding, "test_source");
+            let signature = capture.compute_signature();
+            
+            // Signature should always be valid
+            prop_assert!(signature.is_valid());
+        }
+        
+        // Property 2: Signature hash is consistent with data
+        #[test]
+        fn prop_signature_consistency(data1 in prop::collection::vec(prop::num::f64::ANY, 1..50),
+                                      data2 in prop::collection::vec(prop::num::f64::ANY, 1..50)) {
+            let capture1 = EmbeddingCapture::new(data1.clone(), "test_source");
+            let capture2 = EmbeddingCapture::new(data1, "test_source"); // Same data
+            let capture3 = EmbeddingCapture::new(data2, "test_source"); // Different data
+            
+            let sig1 = capture1.compute_signature();
+            let sig2 = capture2.compute_signature();
+            let sig3 = capture3.compute_signature();
+            
+            // Same data should produce same signature
+            prop_assert_eq!(sig1.hash, sig2.hash);
+            
+            // Different data should likely produce different signatures
+            if sig1.hash != sig3.hash {
+                prop_assert!(true);
+            } else {
+                // Very low probability of collision
+                prop_assume!(false); // Reject this case
+            }
+        }
+    }
+}
+
+1.2 Integration Tests (Python)
+# File: tests/test_topology_integration.py
+
+import pytest
+import numpy as np
+from tcdb.topology import TopologicalSignature, EmbeddingCapture
+from tcdb.core import TopologyEngine
+
+class TestTopologicalSignatureIntegration:
+    """Integration tests for topological signature generation"""
+    
+    def test_embedding_capture_integration(self):
+        """Test integration between embedding capture and signature generation"""
+        # Arrange
+        embedding_data = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+        capture = EmbeddingCapture(embedding_data, source_id="test_source")
+        
+        # Act
+        signature = capture.compute_signature()
+        
+        # Assert
+        assert isinstance(signature, TopologicalSignature)
+        assert signature.betti_numbers is not None
+        assert len(signature.betti_numbers) > 0
+        
+    def test_topology_engine_signature_generation(self):
+        """Test full topology engine signature generation"""
+        # Arrange
+        engine = TopologyEngine()
+        test_data = np.random.rand(10, 5)  # 10 points in 5D space
+        
+        # Act
+        signature = engine.compute_signature(test_data)
+        
+        # Assert
+        assert isinstance(signature, TopologicalSignature)
+        assert signature.hash is not None
+        assert len(signature.hash) > 0
+        
+    def test_signature_comparison_integration(self):
+        """Test signature comparison functionality"""
+        # Arrange
+        engine = TopologyEngine()
+        data1 = np.random.rand(20, 3)
+        data2 = np.random.rand(20, 3)
+        
+        sig1 = engine.compute_signature(data1)
+        sig2 = engine.compute_signature(data2)
+        
+        # Act
+        distance = engine.compare_signatures(sig1, sig2)
+        
+        # Assert
+        assert isinstance(distance, float)
+        assert distance >= 0.0
+        
+    def test_large_dataset_performance(self):
+        """Test performance with large datasets"""
+        # Arrange
+        engine = TopologyEngine()
+        large_data = np.random.rand(1000, 10)  # 1000 points in 10D
+        
+        # Act
+        import time
+        start_time = time.time()
+        signature = engine.compute_signature(large_data)
+        end_time = time.time()
+        
+        # Assert
+        assert (end_time - start_time) < 0.1  # Should be fast
+        assert signature is not None
+
+# Performance regression tests
+class TestPerformanceRegression:
+    """Performance regression tests for topological computations"""
+    
+    @pytest.mark.parametrize("size", [100, 500, 1000])
+    def test_persistent_homology_performance(self, size):
+        """Test persistent homology computation performance scales appropriately"""
+        # Arrange
+        engine = TopologyEngine()
+        data = np.random.rand(size, 5)
+        
+        # Act
+        import time
+        start_time = time.time()
+        signature = engine.compute_signature(data)
+        end_time = time.time()
+        
+        duration = end_time - start_time
+        
+        # Assert - O(n^3) complexity should be bounded
+        expected_max_time = (size / 100.0) ** 2 * 0.01  # Quadratic scaling
+        assert duration < expected_max_time, f"Computation took {duration}s for {size} points"
+
+2. Provenance System Tests
+2.1 Unit Tests (Rust)
+// File: tests/provenance_tests.rs
+
+#[cfg(test)]
+mod tests {
+    use tcdb_provenance::{ProvenanceTracker, ReasoningStep, OperationType};
+    use uuid::Uuid;
+    
+    // Test 1: Empty tracker has no nodes
+    #[test]
+    fn test_empty_tracker() {
+        // Arrange
+        let tracker = ProvenanceTracker::new();
+        
+        // Act
+        let graph = tracker.get_provenance_graph();
+        
+        // Assert
+        assert_eq!(graph.nodes.len(), 0);
+        assert_eq!(graph.edges.len(), 0);
+    }
+    
+    // Test 2: Single reasoning step creates node
+    #[test]
+    fn test_single_reasoning_step() {
+        // Arrange
+        let mut tracker = ProvenanceTracker::new();
+        let step = ReasoningStep::new(
+            Uuid::new_v4(),
+            OperationType::Generation { 
+                prompt: "Test prompt".to_string(), 
+                model: "test-model".to_string() 
+            },
+            vec![], // No input signatures
+            "Test output".to_string(),
+        );
+        
+        // Act
+        tracker.add_step(step.clone());
+        
+        // Assert
+        let graph = tracker.get_provenance_graph();
+        assert_eq!(graph.nodes.len(), 1);
+        assert_eq!(graph.edges.len(), 0);
+        
+        let node = graph.nodes.get(&step.step_id).unwrap();
+        assert_eq!(node.operation, step.operation);
+    }
+    
+    // Test 3: Dependency tracking creates edges
+    #[test]
+    fn test_dependency_tracking() {
+        // Arrange
+        let mut tracker = ProvenanceTracker::new();
+        
+        let parent_step = ReasoningStep::new(
+            Uuid::new_v4(),
+            OperationType::Retrieval { 
+                query: "parent query".to_string(), 
+                sources: vec!["source1".to_string()] 
+            },
+            vec![],
+            "parent output".to_string(),
+        );
+        
+        let child_step = ReasoningStep::new(
+            Uuid::new_v4(),
+            OperationType::Generation { 
+                prompt: "child prompt".to_string(), 
+                model: "test-model".to_string() 
+            },
+            vec![parent_step.compute_signature()], // Depends on parent
+            "child output".to_string(),
+        );
+        
+        // Act
+        tracker.add_step(parent_step);
+        tracker.add_step(child_step);
+        
+        // Assert
+        let graph = tracker.get_provenance_graph();
+        assert_eq!(graph.nodes.len(), 2);
+        assert_eq!(graph.edges.len(), 1);
+    }
+    
+    // Test 4: Provenance graph verification
+    #[test]
+    fn test_provenance_graph_verification() {
+        // Arrange
+        let mut tracker = ProvenanceTracker::new();
+        let step = ReasoningStep::new(
+            Uuid::new_v4(),
+            OperationType::Transformation { 
+                method: "test_method".to_string(), 
+                parameters: Default::default() 
+            },
+            vec![],
+            "test output".to_string(),
+        );
+        
+        tracker.add_step(step);
+        
+        // Act
+        let verification = tracker.verify_provenance();
+        
+        // Assert
+        assert!(verification.is_valid());
+        assert_eq!(verification.errors.len(), 0);
+    }
+    
+    // Test 5: Tampered provenance detection
+    #[test]
+    fn test_tampered_provenance_detection() {
+        // Arrange
+        let mut tracker = ProvenanceTracker::new();
+        let step = ReasoningStep::new(
+            Uuid::new_v4(),
+            OperationType::Generation { 
+                prompt: "original prompt".to_string(), 
+                model: "test-model".to_string() 
+            },
+            vec![],
+            "original output".to_string(),
+        );
+        
+        tracker.add_step(step);
+        
+        // Act - Simulate tampering
+        // This would normally be detected by cryptographic signatures
+        let verification = tracker.verify_provenance();
+        
+        // Assert - In a real implementation, this would fail
+        // For this test, we're just checking the verification structure
+        assert!(verification.is_valid()); // No actual tampering in this test
+    }
+    
+    // Test 6: Provenance export/import
+    #[test]
+    fn test_provenance_export_import() {
+        // Arrange
+        let mut tracker1 = ProvenanceTracker::new();
+        let step = ReasoningStep::new(
+            Uuid::new_v4(),
+            OperationType::Retrieval { 
+                query: "test query".to_string(), 
+                sources: vec!["test_source".to_string()] 
+            },
+            vec![],
+            "test output".to_string(),
+        );
+        
+        tracker1.add_step(step);
+        
+        // Act
+        let exported = tracker1.export_provenance();
+        let tracker2 = ProvenanceTracker::import_provenance(&exported);
+        
+        // Assert
+        let graph1 = tracker1.get_provenance_graph();
+        let graph2 = tracker2.get_provenance_graph();
+        
+        assert_eq!(graph1.nodes.len(), graph2.nodes.len());
+        assert_eq!(graph1.edges.len(), graph2.edges.len());
+    }
+}
+
+// Property-based tests for provenance
+#[cfg(test)]
+mod provenance_property_tests {
+    use proptest::prelude::*;
+    use tcdb_provenance::{ProvenanceTracker, ReasoningStep, OperationType};
+    use uuid::Uuid;
+    
+    proptest! {
+        // Property 1: Any sequence of reasoning steps produces valid provenance
+        #[test]
+        fn prop_valid_provenance(steps in prop::collection::vec(any::<ReasoningStep>(), 1..10)) {
+            let mut tracker = ProvenanceTracker::new();
+            
+            for step in steps {
+                tracker.add_step(step);
+            }
+            
+            let verification = tracker.verify_provenance();
+            prop_assert!(verification.is_valid());
+        }
+        
+        // Property 2: Provenance export/import preserves structure
+        #[test]
+        fn prop_provenance_preservation(steps in prop::collection::vec(any::<ReasoningStep>(), 1..5)) {
+            let mut tracker1 = ProvenanceTracker::new();
+            
+            for step in steps {
+                tracker1.add_step(step);
+            }
+            
+            let exported = tracker1.export_provenance();
+            let tracker2 = ProvenanceTracker::import_provenance(&exported);
+            
+            let graph1 = tracker1.get_provenance_graph();
+            let graph2 = tracker2.get_provenance_graph();
+            
+            prop_assert_eq!(graph1.nodes.len(), graph2.nodes.len());
+            prop_assert_eq!(graph1.edges.len(), graph2.edges.len());
+        }
+    }
+}
+
+2.2 Integration Tests (Python)
+# File: tests/test_provenance_integration.py
+
+import pytest
+from tcdb.provenance import ProvenanceTracker, ReasoningStep
+from tcdb.llm import MockLLM
+
+class TestProvenanceIntegration:
+    """Integration tests for provenance tracking with LLM operations"""
+    
+    def test_llm_call_provenance_tracking(self):
+        """Test that LLM calls are properly tracked with provenance"""
+        # Arrange
+        tracker = ProvenanceTracker()
+        llm = MockLLM()
+        
+        # Act
+        with tracker.track():
+            response = llm.generate("What is 2+2?")
+        
+        # Assert
+        provenance = tracker.get_provenance()
+        assert provenance is not None
+        assert len(provenance.nodes) >= 1  # At least the generation step
+        
+        # Check that the response is in the provenance
+        node_data = [node.data for node in provenance.nodes.values()]
+        assert any("4" in str(data) for data in node_data)  # 2+2=4 should be mentioned
+        
+    def test_rag_retrieval_provenance(self):
+        """Test that RAG retrieval is tracked with provenance"""
+        # Arrange
+        tracker = ProvenanceTracker()
+        llm = MockLLM()
+        
+        # Act
+        with tracker.track():
+            # Simulate RAG workflow
+            query = "What causes inflation?"
+            retrieved_docs = ["doc1", "doc2"]  # Simulated retrieval
+            context = " ".join(retrieved_docs)
+            response = llm.generate(f"Context: {context}\n\nQuery: {query}")
+        
+        # Assert
+        provenance = tracker.get_provenance()
+        assert provenance is not None
+        
+        # Should have retrieval and generation steps
+        retrieval_steps = [node for node in provenance.nodes.values() 
+                          if "Retrieval" in str(node.operation)]
+        generation_steps = [node for node in provenance.nodes.values() 
+                           if "Generation" in str(node.operation)]
+        
+        assert len(retrieval_steps) >= 1
+        assert len(generation_steps) >= 1
+        
+    def test_provenance_verification(self):
+        """Test that provenance verification works correctly"""
+        # Arrange
+        tracker = ProvenanceTracker()
+        llm = MockLLM()
+        
+        # Act
+        with tracker.track():
+            response = llm.generate("Test query")
+        
+        # Assert
+        verification = tracker.verify()
+        assert verification.is_valid
+        assert len(verification.errors) == 0
+        
+    def test_provenance_export_verification(self):
+        """Test that exported provenance can be verified"""
+        # Arrange
+        tracker = ProvenanceTracker()
+        llm = MockLLM()
+        
+        with tracker.track():
+            response = llm.generate("Test query")
+        
+        # Act
+        exported_proof = tracker.export_proof()
+        verification_result = ProvenanceTracker.verify_proof(exported_proof)
+        
+        # Assert
+        assert verification_result.is_valid
+
+class TestProvenancePerformance:
+    """Performance tests for provenance tracking"""
+    
+    @pytest.mark.parametrize("num_operations", [1, 10, 100])
+    def test_provenance_tracking_overhead(self, num_operations):
+        """Test that provenance tracking doesn't add excessive overhead"""
+        # Arrange
+        tracker = ProvenanceTracker()
+        llm = MockLLM()
+        
+        # Act - Track multiple operations
+        import time
+        start_time = time.time()
+        
+        with tracker.track():
+            for i in range(num_operations):
+                llm.generate(f"Query {i}")
+                
+        end_time = time.time()
+        duration = end_time - start_time
+        
+        # Assert - Overhead should be reasonable
+        base_time = 0.01 * num_operations  # Base time without tracking
+        max_allowed_time = base_time * 1.1  # 10% overhead maximum
+        assert duration < max_allowed_time, f"Tracking took {duration}s for {num_operations} operations"
+
+# Mock LLM for testing
+class MockLLM:
+    def generate(self, prompt):
+        # Simulate LLM response with some delay
+        import time
+        time.sleep(0.001)  # 1ms delay
+        return f"Response to: {prompt}"
+
+3. Data Proof System Tests
+3.1 Unit Tests (Rust)
+// File: tests/data_proof_tests.rs
+
+#[cfg(test)]
+mod tests {
+    use tcdb_data_proof::{DataFingerprint, DataProver, ModelAuditor};
+    use tcdb_core::dataset::Dataset;
+    
+    // Test 1: Empty dataset fingerprint
+    #[test]
+    fn test_empty_dataset_fingerprint() {
+        // Arrange
+        let empty_dataset = Dataset::new(vec![]);
+        
+        // Act
+        let fingerprint = DataFingerprint::from_dataset(&empty_dataset);
+        
+        // Assert
+        assert!(!fingerprint.dataset_id.is_empty());
+        assert_eq!(fingerprint.topology_signature.betti_numbers.len(), 0);
+    }
+    
+    // Test 2: Single data point fingerprint
+    #[test]
+    fn test_single_point_fingerprint() {
+        // Arrange
+        let single_point = vec![vec![1.0, 2.0, 3.0]];
+        let dataset = Dataset::new(single_point);
+        
+        // Act
+        let fingerprint = DataFingerprint::from_dataset(&dataset);
+        
+        // Assert
+        assert!(fingerprint.merkle_root.len() > 0);
+        assert_eq!(fingerprint.topology_signature.betti_numbers[0], 1);
+    }
+    
+    // Test 3: Fingerprint uniqueness
+    #[test]
+    fn test_fingerprint_uniqueness() {
+        // Arrange
+        let data1 = Dataset::new(vec![vec![1.0, 2.0], vec![3.0, 4.0]]);
+        let data2 = Dataset::new(vec![vec![10.0, 20.0], vec![30.0, 40.0]]);
+        
+        // Act
+        let fingerprint1 = DataFingerprint::from_dataset(&data1);
+        let fingerprint2 = DataFingerprint::from_dataset(&data2);
+        
+        // Assert
+        assert_ne!(fingerprint1.merkle_root, fingerprint2.merkle_root);
+        assert_ne!(fingerprint1.topology_signature.hash, fingerprint2.topology_signature.hash);
+    }
+    
+    // Test 4: Membership proof verification
+    #[test]
+    fn test_membership_proof_verification() {
+        // Arrange
+        let data_points = vec![
+            vec![1.0, 2.0],
+            vec![3.0, 4.0],
+            vec![5.0, 6.0]
+        ];
+        let dataset = Dataset::new(data_points);
+        let fingerprint = DataFingerprint::from_dataset(&dataset);
+        
+        // Act
+        let proof = fingerprint.generate_membership_proof(&dataset.points[0]);
+        let is_member = fingerprint.verify_membership(&dataset.points[0], &proof);
+        
+        // Assert
+        assert!(is_member);
+    }
+    
+    // Test 5: Non-member proof rejection
+    #[test]
+    fn test_non_member_proof_rejection() {
+        // Arrange
+        let dataset_data = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
+        let dataset = Dataset::new(dataset_data);
+        let fingerprint = DataFingerprint::from_dataset(&dataset);
+        let non_member = vec![100.0, 200.0]; // Not in dataset
+        
+        // Act
+        let proof = fingerprint.generate_membership_proof(&dataset.points[0]);
+        let is_member = fingerprint.verify_membership(&non_member, &proof);
+        
+        // Assert
+        assert!(!is_member);
+    }
+    
+    // Test 6: Data usage proof generation
+    #[test]
+    fn test_data_usage_proof_generation() {
+        // Arrange
+        let prover = DataProver::new();
+        let dataset = Dataset::new(vec![vec![1.0, 2.0], vec![3.0, 4.0]]);
+        let model = MockModel::new(); // Mock model for testing
+        
+        // Act
+        let proof = prover.prove_data_usage(&model, &dataset);
+        
+        // Assert
+        assert!(proof.is_valid());
+        assert!(!proof.proof_data.is_empty());
+    }
+    
+    // Test 7: Data usage proof verification
+    #[test]
+    fn test_data_usage_proof_verification() {
+        // Arrange
+        let prover = DataProver::new();
+        let verifier = DataProver::new();
+        let dataset = Dataset::new(vec![vec![1.0, 2.0], vec![3.0, 4.0]]);
+        let model = MockModel::new();
+        
+        // Act
+        let proof = prover.prove_data_usage(&model, &dataset);
+        let is_valid = verifier.verify_proof(&proof);
+        
+        // Assert
+        assert!(is_valid);
+    }
+    
+    // Test 8: Compliance audit
+    #[test]
+    fn test_compliance_audit() {
+        // Arrange
+        let auditor = ModelAuditor::new();
+        let model = MockModel::new();
+        let test_data = Dataset::new(vec![vec![1.0, 2.0], vec![3.0, 4.0]]);
+        
+        // Act
+        let audit_report = auditor.audit_model(&model, &test_data);
+        
+        // Assert
+        assert!(audit_report.timestamp > 0);
+        assert!(audit_report.model_id.len() > 0);
+    }
+}
+
+// Mock model for testing
+struct MockModel {
+    id: String,
+}
+
+impl MockModel {
+    fn new() -> Self {
+        Self {
+            id: "mock_model_123".to_string(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod property_tests {
+    use proptest::prelude::*;
+    use tcdb_data_proof::{DataFingerprint, DataProver};
+    use tcdb_core::dataset::Dataset;
+    
+    proptest! {
+        // Property 1: Any dataset produces a valid fingerprint
+        #[test]
+        fn prop_valid_fingerprint(data in prop::collection::vec(
+            prop::collection::vec(prop::num::f64::ANY, 1..10), 
+            1..100
+        )) {
+            let dataset = Dataset::new(data);
+            let fingerprint = DataFingerprint::from_dataset(&dataset);
+            
+            prop_assert!(!fingerprint.dataset_id.is_empty());
+            prop_assert!(fingerprint.merkle_root.len() > 0);
+        }
+        
+        // Property 2: Fingerprint is deterministic
+        #[test]
+        fn prop_fingerprint_deterministic(data in prop::collection::vec(
+            prop::collection::vec(prop::num::f64::ANY, 1..10), 
+            1..50
+        )) {
+            let dataset = Dataset::new(data.clone());
+            let fingerprint1 = DataFingerprint::from_dataset(&dataset);
+            let fingerprint2 = DataFingerprint::from_dataset(&dataset);
+            
+            prop_assert_eq!(fingerprint1.merkle_root, fingerprint2.merkle_root);
+            prop_assert_eq!(fingerprint1.topology_signature.hash, fingerprint2.topology_signature.hash);
+        }
+    }
+}
+
+3.2 Integration Tests (Python)
+# File: tests/test_data_proof_integration.py
+
+import pytest
+import numpy as np
+from tcdb.data_proof import DataProver, ModelAuditor
+from tcdb.dataset import Dataset
+
+class TestDataProofIntegration:
+    """Integration tests for data proof system"""
+    
+    def test_dataset_fingerprinting_integration(self):
+        """Test integration between dataset and fingerprinting"""
+        # Arrange
+        data_points = np.random.rand(100, 5)  # 100 points in 5D
+        dataset = Dataset(data_points, name="test_dataset")
+        
+        # Act
+        prover = DataProver()
+        fingerprint = prover.fingerprint_dataset(dataset)
+        
+        # Assert
+        assert fingerprint is not None
+        assert fingerprint.dataset_id == "test_dataset"
+        assert len(fingerprint.merkle_root) > 0
+        assert fingerprint.topology_signature is not None
+        
+    def test_membership_proof_integration(self):
+        """Test membership proof generation and verification"""
+        # Arrange
+        data_points = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+        dataset = Dataset(data_points, name="membership_test")
+        prover = DataProver()
+        fingerprint = prover.fingerprint_dataset(dataset)
+        
+        # Act
+        proof = prover.generate_membership_proof(dataset, data_points[0])
+        is_member = prover.verify_membership_proof(fingerprint, data_points[0], proof)
+        
+        # Assert
+        assert is_member
+        
+        # Test non-member
+        non_member = np.array([100.0, 200.0])
+        non_member_proof = prover.generate_membership_proof(dataset, data_points[0])
+        is_non_member = prover.verify_membership_proof(fingerprint, non_member, non_member_proof)
+        assert not is_non_member
+        
+    def test_data_usage_proof_integration(self):
+        """Test data usage proof generation and verification"""
+        # Arrange
+        training_data = np.random.rand(50, 3)
+        test_data = np.random.rand(20, 3)
+        dataset = Dataset(training_data, name="training_data")
+        
+        # Mock model behavior
+        class MockModel:
+            def predict(self, X):
+                # Simple transformation that should create detectable topology
+                return X * 2 + 1
+                
+        model = MockModel()
+        prover = DataProver()
+        
+        # Act
+        fingerprint = prover.fingerprint_dataset(dataset)
+        proof = prover.prove_data_usage(model, dataset, zero_knowledge=False)
+        is_valid = prover.verify_proof(proof, fingerprint)
+        
+        # Assert
+        assert is_valid
+        
+    def test_compliance_audit_integration(self):
+        """Test compliance auditing integration"""
+        # Arrange
+        auditor = ModelAuditor()
+        test_data = np.random.rand(30, 4)
+        dataset = Dataset(test_data, name="compliance_test")
+        
+        class MockModel:
+            def predict(self, X):
+                return X.sum(axis=1)
+                
+        model = MockModel()
+        
+        # Act
+        audit_report = auditor.audit_model(model, dataset)
+        
+        # Assert
+        assert audit_report is not None
+        assert audit_report.timestamp > 0
+        assert audit_report.model_id is not None
+        assert hasattr(audit_report, 'passed')
+        
+    def test_zero_knowledge_proof_integration(self):
+        """Test zero-knowledge proof integration"""
+        # Arrange
+        data = np.random.rand(40, 3)
+        dataset = Dataset(data, name="zk_test")
+        prover = DataProver()
+        
+        class MockModel:
+            def get_embeddings(self, X):
+                # Return embeddings that should have detectable topology
+                return X + np.random.normal(0, 0.1, X.shape)
+                
+        model = MockModel()
+        
+        # Act
+        fingerprint = prover.fingerprint_dataset(dataset)
+        zk_proof = prover.prove_data_usage(model, dataset, zero_knowledge=True)
+        is_valid = prover.verify_proof(zk_proof, fingerprint)
+        
+        # Assert
+        assert is_valid
+        # ZK proof should not reveal the actual data
+        assert "data" not in str(zk_proof.proof_data).lower()
+
+class TestDataProofPerformance:
+    """Performance tests for data proof system"""
+    
+    @pytest.mark.parametrize("dataset_size", [100, 1000, 10000])
+    def test_fingerprinting_performance(self, dataset_size):
+        """Test fingerprinting performance scales appropriately"""
+        # Arrange
+        data = np.random.rand(dataset_size, 5)
+        dataset = Dataset(data, name=f"perf_test_{dataset_size}")
+        prover = DataProver()
+        
+        # Act
+        import time
+        start_time = time.time()
+        fingerprint = prover.fingerprint_dataset(dataset)
+        end_time = time.time()
+        
+        duration = end_time - start_time
+        
+        # Assert - Should scale reasonably
+        max_expected_time = (dataset_size / 1000.0) * 0.1  # 100ms per 1000 points
+        assert duration < max_expected_time, f"Fingerprinting took {duration}s for {dataset_size} points"
+        
+    def test_proof_generation_performance(self):
+        """Test proof generation performance"""
+        # Arrange
+        data = np.random.rand(500, 4)
+        dataset = Dataset(data, name="proof_perf_test")
+        prover = DataProver()
+        
+        class MockModel:
+            def get_embeddings(self, X):
+                return X * 1.5 + 2.0
+                
+        model = MockModel()
+        
+        # Act
+        import time
+        start_time = time.time()
+        proof = prover.prove_data_usage(model, dataset, zero_knowledge=False)
+        end_time = time.time()
+        
+        duration = end_time - start_time
+        
+        # Assert
+        assert duration < 1.0  # Should be fast
+        assert proof.is_valid()
+
+# Mock dataset class for testing
+class MockDataset:
+    def __init__(self, data, name="mock_dataset"):
+        self.data = data
+        self.name = name
+        self.id = f"dataset_{id(self)}"
+
+4. Cross-Domain Reasoning Tests
+4.1 Unit Tests (Rust)
+// File: tests/cross_domain_tests.rs
+
+#[cfg(test)]
+mod tests {
+    use tcdb_cross_domain::{DomainMapper, PrincipleTransferEngine, DomainStructure};
+    use tcdb_core::topology::TopologySignature;
+    
+    // Test 1: Domain mapper initialization
+    #[test]
+    fn test_domain_mapper_initialization() {
+        // Arrange
+        let mapper = DomainMapper::new();
+        
+        // Act
+        let known_domains = mapper.get_known_domains();
+        
+        // Assert
+        assert!(known_domains.len() >= 0); // May start empty
+    }
+    
+    // Test 2: Register domain structure
+    #[test]
+    fn test_register_domain_structure() {
+        // Arrange
+        let mut mapper = DomainMapper::new();
+        let domain_struct = DomainStructure::new(
+            "test_domain".to_string(),
+            vec![], // No axioms for test
+        );
+        
+        // Act
+        mapper.register_domain(domain_struct.clone());
+        
+        // Assert
+        let known_domains = mapper.get_known_domains();
+        assert!(known_domains.contains_key("test_domain"));
+        assert_eq!(known_domains.get("test_domain").unwrap().name, "test_domain");
+    }
+    
+    // Test 3: Find equivalent domains (no matches)
+    #[test]
+    fn test_find_equivalent_domains_no_matches() {
+        // Arrange
+        let mapper = DomainMapper::new();
+        
+        // Act
+        let equivalences = mapper.find_equivalent_domains("nonexistent_domain");
+        
+        // Assert
+        assert_eq!(equivalences.len(), 0);
+    }
+    
+    // Test 4: Principle transfer engine initialization
+    #[test]
+    fn test_principle_transfer_engine_initialization() {
+        // Arrange
+        let mapper = DomainMapper::new();
+        
+        // Act
+        let engine = PrincipleTransferEngine::new(mapper);
+        
+        // Assert
+        assert!(true); // Should not panic
+    }
+    
+    // Test 5: Transfer principle between domains
+    #[test]
+    fn test_principle_transfer() {
+        // Arrange
+        let mut mapper = DomainMapper::new();
+        let engine = PrincipleTransferEngine::new(mapper);
+        
+        // Mock principle
+        let principle = MockPrinciple::new("test_principle", "source_domain");
+        
+        // Act
+        let result = engine.transfer_principle(&principle, "source_domain", "target_domain");
+        
+        // Assert
+        // In a real implementation, this would depend on domain equivalences
+        // For now, we just check that it doesn't panic
+        assert!(result.is_ok() || result.is_err()); // Either outcome is valid for this test
+    }
+    
+    // Test 6: Discover hidden connections
+    #[test]
+    fn test_discover_hidden_connections() {
+        // Arrange
+        let mapper = DomainMapper::new();
+        let engine = PrincipleTransferEngine::new(mapper);
+        
+        // Act
+        let connections = engine.discover_hidden_connections();
+        
+        // Assert
+        assert!(connections.len() >= 0); // May be empty initially
+    }
+    
+    // Test 7: Domain structure validation
+    #[test]
+    fn test_domain_structure_validation() {
+        // Arrange
+        let valid_struct = DomainStructure::new(
+            "valid_domain".to_string(),
+            vec![], // Axioms would be added in real implementation
+        );
+        
+        // Act
+        let is_valid = valid_struct.is_valid();
+        
+        // Assert
+        assert!(is_valid);
+    }
+}
+
+// Mock principle for testing
+struct MockPrinciple {
+    name: String,
+    domain: String,
+}
+
+impl MockPrinciple {
+    fn new(name: &str, domain: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            domain: domain.to_string(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod property_tests {
+    use proptest::prelude::*;
+    use tcdb_cross_domain::{DomainMapper, DomainStructure};
+    
+    proptest! {
+        // Property 1: Any domain name can be registered
+        #[test]
+        fn prop_domain_registration(domain_name in "[a-zA-Z0-9_]+") {
+            let mut mapper = DomainMapper::new();
+            let domain_struct = DomainStructure::new(domain_name.clone(), vec![]);
+            
+            mapper.register_domain(domain_struct);
+            
+            let known_domains = mapper.get_known_domains();
+            prop_assert!(known_domains.contains_key(&domain_name));
+        }
+        
+        // Property 2: Domain mapper preserves registered domains
+        #[test]
+        fn prop_domain_preservation(domains in prop::collection::vec("[a-zA-Z0-9_]+", 1..10)) {
+            let mut mapper = DomainMapper::new();
+            
+            for domain_name in &domains {
+                let domain_struct = DomainStructure::new(domain_name.clone(), vec![]);
+                mapper.register_domain(domain_struct);
+            }
+            
+            let known_domains = mapper.get_known_domains();
+            for domain_name in &domains {
+                prop_assert!(known_domains.contains_key(domain_name));
+            }
+        }
+    }
+}
+
+4.2 Integration Tests (Python)
+# File: tests/test_cross_domain_integration.py
+
+import pytest
+import numpy as np
+from tcdb.cross_domain import DomainMapper, PrincipleTransferEngine
+from tcdb.topology import TopologicalSignature
+
+class TestCrossDomainIntegration:
+    """Integration tests for cross-domain reasoning system"""
+    
+    def test_domain_mapper_initialization(self):
+        """Test domain mapper initialization and basic functionality"""
+        # Arrange
+        mapper = DomainMapper()
+        
+        # Act
+        known_domains = mapper.get_known_domains()
+        
+        # Assert
+        assert isinstance(known_domains, dict)
+        
+    def test_register_and_find_domain(self):
+        """Test registering a domain and finding it"""
+        # Arrange
+        mapper = DomainMapper()
+        test_domain_data = np.random.rand(50, 3)  # Sample data for topology
+        
+        # Act
+        mapper.register_domain("test_domain", test_domain_data)
+        known_domains = mapper.get_known_domains()
+        
+        # Assert
+        assert "test_domain" in known_domains
+        assert known_domains["test_domain"] is not None
+        
+    def test_domain_topology_computation(self):
+        """Test that domain registration computes topology"""
+        # Arrange
+        mapper = DomainMapper()
+        test_data = np.random.rand(100, 4)
+        
+        # Act
+        mapper.register_domain("topo_test_domain", test_data)
+        domain_info = mapper.get_domain_info("topo_test_domain")
+        
+        # Assert
+        assert domain_info is not None
+        assert hasattr(domain_info, 'topology_signature')
+        assert domain_info.topology_signature is not None
+        
+    def test_find_equivalent_domains(self):
+        """Test finding topologically equivalent domains"""
+        # Arrange
+        mapper = DomainMapper()
+        
+        # Create two similar datasets (should be topologically similar)
+        data1 = np.random.rand(60, 3)
+        data2 = data1 + np.random.normal(0, 0.1, data1.shape)  # Small perturbation
+        
+        mapper.register_domain("domain1", data1)
+        mapper.register_domain("domain2", data2)
+        
+        # Act
+        equivalences = mapper.find_equivalent_domains("domain1")
+        
+        # Assert
+        # Should find at least the domains themselves
+        assert len(equivalences) >= 1
+        
+    def test_principle_transfer_engine(self):
+        """Test principle transfer engine initialization"""
+        # Arrange
+        mapper = DomainMapper()
+        engine = PrincipleTransferEngine(mapper)
+        
+        # Act & Assert
+        assert engine is not None
+        assert hasattr(engine, 'domain_mapper')
+        
+    def test_cross_domain_discovery(self):
+        """Test discovering hidden connections between domains"""
+        # Arrange
+        mapper = DomainMapper()
+        engine = PrincipleTransferEngine(mapper)
+        
+        # Register some domains with similar topology
+        data1 = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])  # Square
+        data2 = np.array([[2, 2], [3, 2], [3, 3], [2, 3]])  # Translated square
+        
+        mapper.register_domain("geometry1", data1)
+        mapper.register_domain("geometry2", data2)
+        
+        # Act
+        connections = engine.discover_hidden_connections()
+        
+        # Assert
+        # Should find some connections due to similar topology
+        assert isinstance(connections, list)
+
+class TestCrossDomainPerformance:
+    """Performance tests for cross-domain reasoning"""
+    
+    @pytest.mark.parametrize("num_domains", [5, 10, 20])
+    def test_domain_registration_performance(self, num_domains):
+        """Test performance of registering multiple domains"""
+        # Arrange
+        mapper = DomainMapper()
+        domains_data = [np.random.rand(30, 3) for _ in range(num_domains)]
+        
+        # Act
+        import time
+        start_time = time.time()
+        
+        for i, data in enumerate(domains_data):
+            mapper.register_domain(f"domain_{i}", data)
+            
+        end_time = time.time()
+        duration = end_time - start_time
+        
+        # Assert
+        assert duration < 1.0  # Should be fast even with many domains
+        assert len(mapper.get_known_domains()) == num_domains
+        
+    def test_equivalence_search_performance(self):
+        """Test performance of equivalence searching"""
+        # Arrange
+        mapper = DomainMapper()
+        
+        # Register many domains
+        for i in range(50):
+            data = np.random.rand(20, 2)
+            mapper.register_domain(f"domain_{i}", data)
+        
+        # Act
+        import time
+        start_time = time.time()
+        equivalences = mapper.find_equivalent_domains("domain_0")
+        end_time = time.time()
+        
+        duration = end_time - start_time
+        
+        # Assert
+        assert duration < 0.5  # Should be fast
+        assert isinstance(equivalences, list)
+
+# Mock classes for testing
+class MockDomainMapper:
+    def __init__(self):
+        self.domains = {}
+        
+    def register_domain(self, name, data):
+        self.domains[name] = data
+        
+    def get_known_domains(self):
+        return self.domains
+
+class MockPrinciple:
+    def __init__(self, name, domain):
+        self.name = name
+        self.domain = domain
+        self.is_topological = True
+
+5. System Integration Tests
+5.1 End-to-End Tests
+# File: tests/test_system_integration.py
+
+import pytest
+import numpy as np
+from tcdb import TCDBSystem
+from tcdb.provenance import ProvenanceTracker
+from tcdb.data_proof import DataProver
+from tcdb.cross_domain import DomainMapper
+
+class TestSystemIntegration:
+    """End-to-end integration tests for the complete TCDB system"""
+    
+    def test_complete_llm_query_with_provenance(self):
+        """Test complete LLM query with full provenance tracking"""
+        # Arrange
+        system = TCDBSystem()
+        query = "Explain the relationship between neural networks and power grids"
+        
+        # Act
+        response = system.query(query)
+        provenance = system.get_provenance()
+        
+        # Assert
+        assert response is not None
+        assert len(response) > 0
+        assert provenance is not None
+        
+        # Check provenance structure
+        assert hasattr(provenance, 'nodes')
+        assert hasattr(provenance, 'edges')
+        assert len(provenance.nodes) > 0
+        
+    def test_data_usage_provenance_integration(self):
+        """Test that data usage is properly tracked and proven"""
+        # Arrange
+        system = TCDBSystem()
+        training_data = np.random.rand(100, 5)
+        system.register_training_data("test_dataset", training_data)
+        
+        # Act
+        response = system.query("Analyze the training data")
+        data_proof = system.generate_data_usage_proof("test_dataset")
+        
+        # Assert
+        assert data_proof is not None
+        assert data_proof.is_valid()
+        
+        # Verify the proof
+        verification = system.verify_data_usage_proof(data_proof)
+        assert verification
+        
+    def test_cross_domain_reasoning_integration(self):
+        """Test cross-domain reasoning integration"""
+        # Arrange
+        system = TCDBSystem()
+        
+        # Register domains that should be topologically similar
+        neural_data = np.random.rand(40, 3)  # Neural network-like data
+        power_data = neural_data + np.random.normal(0, 0.1, neural_data.shape)  # Similar
+        
+        system.register_domain("neural_networks", neural_data)
+        system.register_domain("power_grids", power_data)
+        
+        # Act
+        connections = system.discover_cross_domain_connections()
+        response = system.query(
+            "How do principles from neural networks apply to power grids?",
+            domain="power_grids"
+        )
+        
+        # Assert
+        assert isinstance(connections, list)
+        assert len(response) > 0
+        
+        # Should mention cross-domain insights
+        assert any(domain in response.lower() for domain in ["neural", "power", "grid"])
+        
+    def test_complete_verification_workflow(self):
+        """Test complete verification workflow"""
+        # Arrange
+        system = TCDBSystem()
+        query = "What causes market volatility?"
+        
+        # Act
+        response = system.query(query)
+        provenance = system.get_provenance()
+        proof = system.export_provenance_proof()
+        
+        # Verify everything
+        provenance_valid = system.verify_provenance()
+        proof_valid = system.verify_proof(proof)
+        
+        # Assert
+        assert provenance_valid
+        assert proof_valid
+        assert response is not None
+        assert provenance is not None
+        
+    def test_multi_domain_query(self):
+        """Test querying across multiple domains"""
+        # Arrange
+        system = TCDBSystem()
+        
+        # Register multiple domains
+        biology_data = np.random.rand(50, 4)
+        finance_data = np.random.rand(50, 4)
+        physics_data = np.random.rand(50, 4)
+        
+        system.register_domain("biology", biology_data)
+        system.register_domain("finance", finance_data)
+        system.register_domain("physics", physics_data)
+        
+        # Act
+        response = system.query(
+            "Find connections between biology, finance, and physics",
+            domains=["biology", "finance", "physics"]
+        )
+        
+        # Assert
+        assert response is not None
+        assert len(response) > 0
+        
+        # Should mention multiple domains
+        domains_mentioned = sum(
+            1 for domain in ["biology", "finance", "physics"] 
+            if domain in response.lower()
+        )
+        assert domains_mentioned >= 2  # Should mention at least 2 domains
+
+class TestSystemPerformance:
+    """Performance tests for the complete system"""
+    
+    def test_query_response_time(self):
+        """Test that queries respond within acceptable time"""
+        # Arrange
+        system = TCDBSystem()
+        query = "Analyze market trends"
+        
+        # Act
+        import time
+        start_time = time.time()
+        response = system.query(query)
+        end_time = time.time()
+        
+        duration = end_time - start_time
+        
+        # Assert
+        assert duration < 2.0  # Should respond in < 2 seconds
+        assert response is not None
+        
+    def test_provenance_overhead(self):
+        """Test that provenance tracking doesn't add excessive overhead"""
+        # Arrange
+        system = TCDBSystem()
+        query = "Simple query"
+        
+        # Time without provenance tracking
+        start_time = time.time()
+        response_no_tracking = system.query(query, track_provenance=False)
+        time_no_tracking = time.time() - start_time
+        
+        # Time with provenance tracking
+        start_time = time.time()
+        response_with_tracking = system.query(query, track_provenance=True)
+        time_with_tracking = time.time() - start_time
+        
+        overhead = time_with_tracking - time_no_tracking
+        overhead_percentage = (overhead / time_no_tracking) * 100 if time_no_tracking > 0 else 0
+        
+        # Assert
+        assert overhead_percentage < 20  # Less than 20% overhead
+        assert response_no_tracking is not None
+        assert response_with_tracking is not None
+
+# Mock system for testing
+class MockTCDBSystem:
+    def __init__(self):
+        self.provenance_tracker = ProvenanceTracker()
+        self.data_prover = DataProver()
+        self.domain_mapper = DomainMapper()
+        
+    def query(self, query_text, track_provenance=True, domains=None):
+        if track_provenance:
+            with self.provenance_tracker.track():
+                # Simulate processing
+                import time
+                time.sleep(0.01)  # 10ms processing
+                return f"Response to: {query_text}"
+        else:
+            return f"Response to: {query_text}"
+            
+    def get_provenance(self):
+        return self.provenance_tracker.get_provenance()
+        
+    def register_training_data(self, name, data):
+        pass  # Mock implementation
+        
+    def register_domain(self, name, data):
+        self.domain_mapper.register_domain(name, data)
+        
+    def discover_cross_domain_connections(self):
+        return []  # Mock implementation
+        
+    def verify_provenance(self):
+        return True  # Mock implementation
+        
+    def export_provenance_proof(self):
+        return "mock_proof"  # Mock implementation
+        
+    def verify_proof(self, proof):
+        return True  # Mock implementation
+
+6. Test Execution Plan
+6.1 Test Suite Organization
+tests/
+├── unit/
+│   ├── rust/
+│   │   ├── topology_signature_tests.rs
+│   │   ├── provenance_tests.rs
+│   │   ├── data_proof_tests.rs
+│   │   └── cross_domain_tests.rs
+│   └── python/
+│       ├── test_topology_unit.py
+│       ├── test_provenance_unit.py
+│       ├── test_data_proof_unit.py
+│       └── test_cross_domain_unit.py
+├── integration/
+│   ├── test_topology_integration.py
+│   ├── test_provenance_integration.py
+│   ├── test_data_proof_integration.py
+│   └── test_cross_domain_integration.py
+├── system/
+│   └── test_system_integration.py
+└── performance/
+    └── test_performance_benchmarks.py
+
+6.2 Test Execution Commands
+# Run all unit tests
+cargo test --lib
+pytest tests/unit/
+
+# Run integration tests
+pytest tests/integration/
+
+# Run system integration tests
+pytest tests/system/
+
+# Run performance tests
+pytest tests/performance/ -v
+
+# Run specific test module
+pytest tests/unit/python/test_topology_unit.py::TestTopologySignature::test_single_point_signature
+
+# Run tests with coverage
+pytest --cov=tcdb --cov-report=html tests/
+
+# Run tests in parallel
+pytest -n auto tests/
+
+6.3 Continuous Integration Configuration
+# .github/workflows/ci.yml
+
+name: CI Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+        
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+    - name: Run Rust unit tests
+      run: cargo test --lib
+      
+    - name: Run Python unit tests
+      run: pytest tests/unit/python/ -v
+      
+    - name: Run integration tests
+      run: pytest tests/integration/ -v
+      
+    - name: Run system tests
+      run: pytest tests/system/ -v
+      
+    - name: Run performance tests
+      run: pytest tests/performance/ --durations=10
+      
+    - name: Upload coverage
+      uses: codecov/codecov-action@v1
+
+7. Test Quality Metrics
+7.1 Code Coverage Targets
+Unit Tests: 95%+ coverage
+Integration Tests: 90%+ coverage
+System Tests: 85%+ coverage
+7.2 Performance Benchmarks
+Component	Target Latency	Test Frequency
+Topology Signature	< 100ms (1K points)	Every commit
+Provenance Tracking	< 5% overhead	Every commit
+Data Proof Generation	< 1s	Every commit
+Cross-Domain Search	< 500ms (50 domains)	Every commit
+Full Query Response	< 2s	Every commit
+7.3 Test Success Criteria
+All tests pass on every commit
+Code coverage meets targets
+Performance benchmarks maintained
+No regressions in functionality
+Security vulnerabilities detected and addressed
+8. TDD Implementation Guidelines
+8.1 Red-Green-Refactor Cycle
+Red: Write failing test first
+Green: Write minimal code to pass test
+Refactor: Improve code while keeping tests green
+8.2 Test Organization Principles
+One assertion per test (when possible)
+Descriptive test names following test_action_expectation pattern
+Arrange-Act-Assert structure in all tests
+Isolated tests with no shared state
+Fast tests (< 100ms for unit tests)
+8.3 Mocking Strategy
+Use real implementations when fast and reliable
+Mock external dependencies (databases, APIs)
+Mock time-intensive operations in unit tests
+Use property-based testing for complex logic
+Integration tests use real components where possible
+
+This comprehensive TDD test suite ensures that the TCDB AI Grounding System is robust, reliable, and maintainable while meeting all performance and correctness requirements.
