@@ -1,0 +1,17 @@
+python/
+rust/
+*.toml
+*.lock
+pyproject.toml
+poetry.lock
+Cargo.toml
+Cargo.lock
+requirements.txt
+.venv/
+venv/
+__pycache__/
+*.py
+*.rs
+tests/
+target/
+
