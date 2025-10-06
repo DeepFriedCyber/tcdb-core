@@ -19,3 +19,15 @@ id = "07f93ea2cc364645be74036543469095"
 binding = "API_KEYS"
 id = "ff63a5baf8c84b6a8e5e851a574d9e26"
 
+# Routes - map API paths to this worker
+[[routes]]
+pattern = "tcdb.uk/api/auth/*"
+zone_name = "tcdb.uk"
+
+[[routes]]
+pattern = "tcdb.uk/api/keys/*"
+zone_name = "tcdb.uk"
+
+[[routes]]
+pattern = "tcdb.uk/api/keys"
+zone_name = "tcdb.uk"
