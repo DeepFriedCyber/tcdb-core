@@ -3,6 +3,6 @@ services:
     name: tcdb-core-homepage
     env: static
     rootDir: docs
-    buildCommand: ""
-    staticPublishPath: .
+    buildCommand: "bash build.sh"
+    staticPublishPath: "."
 
