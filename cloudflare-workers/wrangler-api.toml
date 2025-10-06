@@ -1,0 +1,22 @@
+name = "tcdb-api"
+main = "api-worker.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "API_KEYS"
+id = "ff63a5baf8c84b6a8e5e851a574d9e26"
+
+[[kv_namespaces]]
+binding = "USAGE"
+id = "87afc157e60442bdb3006d8680366f57"
+
+[[kv_namespaces]]
+binding = "PROVENANCE"
+id = "61c3e0c542fc4a72b230709043194271"
+
+# Routes - map API v1 paths to this worker
+[[routes]]
+pattern = "tcdb.uk/api/v1/*"
+zone_name = "tcdb.uk"
+
