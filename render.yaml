@@ -2,9 +2,7 @@ services:
   - type: web
     name: tcdb-core-homepage
     env: static
-    buildCommand: "echo 'Static site - no build needed'"
-    staticPublishPath: ./docs
-    envVars:
-      - key: SKIP_INSTALL_DEPS
-        value: "true"
+    rootDir: docs
+    buildCommand: ""
+    staticPublishPath: .
 
