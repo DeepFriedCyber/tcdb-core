@@ -46,15 +46,20 @@ export default {
       return handleCrossDomainReason(request, env, corsHeaders);
     }
 
+    if (path === '/api/v1/entropy/analyze' && request.method === 'POST') {
+      return handleEntropyAnalysis(request, env, corsHeaders);
+    }
+
     if (path === '/api/v1/health' && request.method === 'GET') {
-      return jsonResponse({ 
+      return jsonResponse({
         status: 'healthy',
-        version: '1.0.0',
+        version: '1.1.0',
         endpoints: [
           '/api/v1/topology/signature',
           '/api/v1/provenance/track',
           '/api/v1/data/proof',
-          '/api/v1/cross-domain/reason'
+          '/api/v1/cross-domain/reason',
+          '/api/v1/entropy/analyze'
         ]
       }, 200, corsHeaders);
     }
@@ -222,6 +227,68 @@ async function handleCrossDomainReason(request, env, corsHeaders) {
   }
 }
 
+// Handler: Entropy Analysis
+async function handleEntropyAnalysis(request, env, corsHeaders) {
+  try {
+    const {
+      data,
+      analysis_type = 'shannon',
+      options = {}
+    } = await request.json();
+
+    if (!data) {
+      return jsonResponse({
+        error: 'Invalid input. Required: data (array or object)'
+      }, 400, corsHeaders);
+    }
+
+    let result = {};
+
+    // Handle different analysis types
+    switch (analysis_type) {
+      case 'shannon':
+        result = await analyzeShannon(data, options);
+        break;
+
+      case 'topological':
+        result = await analyzeTopologicalEntropy(data, options);
+        break;
+
+      case 'provenance':
+        result = await analyzeProvenanceEntropy(data, options);
+        break;
+
+      case 'dataset':
+        result = await analyzeDatasetEntropy(data, options);
+        break;
+
+      case 'comprehensive':
+        // Run all analyses
+        result = {
+          shannon: await analyzeShannon(data, options),
+          topological: await analyzeTopologicalEntropy(data, options),
+          dataset: await analyzeDatasetEntropy(data, options)
+        };
+        break;
+
+      default:
+        return jsonResponse({
+          error: `Unknown analysis type: ${analysis_type}. Valid types: shannon, topological, provenance, dataset, comprehensive`
+        }, 400, corsHeaders);
+    }
+
+    return jsonResponse({
+      success: true,
+      analysis_type,
+      result,
+      timestamp: Date.now()
+    }, 200, corsHeaders);
+
+  } catch (error) {
+    return jsonResponse({ error: error.message }, 500, corsHeaders);
+  }
+}
+
 // Compute topological signature (simplified version)
 async function computeTopologicalSignature(data, method, maxDimension) {
   // This is a simplified simulation
@@ -321,6 +388,199 @@ async function discoverConnections(domainA, domainB, similarity) {
         : `Similarity too low for reliable principle transfer`
     }
   ];
+}
+
+// Entropy Analysis Functions
+
+// Shannon entropy analysis
+async function analyzeShannon(data, options) {
+  let probabilities = [];
+
+  if (Array.isArray(data)) {
+    // Convert data to probability distribution
+    if (data.every(x => typeof x === 'number' && x >= 0 && x <= 1)) {
+      // Already probabilities
+      probabilities = data;
+    } else {
+      // Create histogram
+      const counts = {};
+      data.forEach(x => counts[x] = (counts[x] || 0) + 1);
+      const total = data.length;
+      probabilities = Object.values(counts).map(c => c / total);
+    }
+  } else if (typeof data === 'object') {
+    // Assume object with counts
+    const total = Object.values(data).reduce((a, b) => a + b, 0);
+    probabilities = Object.values(data).map(c => c / total);
+  }
+
+  // Compute Shannon entropy
+  const entropy = shannonEntropy(probabilities);
+  const maxEntropy = Math.log2(probabilities.length);
+  const normalized = maxEntropy > 0 ? entropy / maxEntropy : 0;
+
+  return {
+    shannon_entropy: entropy,
+    max_entropy: maxEntropy,
+    normalized_entropy: normalized,
+    num_outcomes: probabilities.length,
+    interpretation: interpretEntropy(normalized),
+    optimal_encoding_bits: Math.ceil(entropy * data.length)
+  };
+}
+
+// Topological entropy analysis
+async function analyzeTopologicalEntropy(data, options) {
+  if (!Array.isArray(data)) {
+    throw new Error('Topological entropy requires array data');
+  }
+
+  // Compute persistence intervals (simplified)
+  const intervals = [];
+  for (let i = 0; i < data.length - 1; i++) {
+    intervals.push(Math.abs(data[i+1] - data[i]));
+  }
+
+  const persistenceEntropy = persistenceEntropyCalc(intervals);
+
+  // Simulate Betti numbers
+  const bettiNumbers = [
+    Math.floor(data.length / 3),
+    Math.floor(data.length / 5),
+    Math.floor(data.length / 10)
+  ];
+
+  const totalBetti = bettiNumbers.reduce((a, c) => a + c, 0);
+  const bettiEntropy = totalBetti > 0
+    ? shannonEntropy(bettiNumbers.map(b => b / totalBetti))
+    : 0;
+
+  // Normalize entropies
+  const maxPersEntropy = intervals.length > 0 ? Math.log2(intervals.length) : 1;
+  const maxBettiEntropy = bettiNumbers.length > 0 ? Math.log2(bettiNumbers.length) : 1;
+
+  const normPers = maxPersEntropy > 0 ? persistenceEntropy / maxPersEntropy : 0;
+  const normBetti = maxBettiEntropy > 0 ? bettiEntropy / maxBettiEntropy : 0;
+
+  const complexity = (normPers + normBetti) / 2;
+
+  return {
+    persistence_entropy: persistenceEntropy,
+    betti_entropy: bettiEntropy,
+    complexity_score: Math.min(1.0, Math.max(0.0, complexity)),
+    betti_numbers: bettiNumbers,
+    interpretation: interpretComplexity(complexity)
+  };
+}
+
+// Provenance entropy analysis
+async function analyzeProvenanceEntropy(data, options) {
+  if (!data.operations || !Array.isArray(data.operations)) {
+    throw new Error('Provenance entropy requires operations array');
+  }
+
+  // Count operation types
+  const opCounts = {};
+  data.operations.forEach(op => {
+    opCounts[op.type] = (opCounts[op.type] || 0) + 1;
+  });
+
+  const total = data.operations.length;
+  const probabilities = Object.values(opCounts).map(c => c / total);
+
+  const operationEntropy = shannonEntropy(probabilities);
+  const maxOpEntropy = Math.log2(Object.keys(opCounts).length);
+
+  return {
+    operation_entropy: operationEntropy,
+    max_operation_entropy: maxOpEntropy,
+    normalized_entropy: maxOpEntropy > 0 ? operationEntropy / maxOpEntropy : 0,
+    operation_types: Object.keys(opCounts).length,
+    total_operations: total,
+    interpretation: interpretDiversity(operationEntropy)
+  };
+}
+
+// Dataset entropy analysis
+async function analyzeDatasetEntropy(data, options) {
+  if (!Array.isArray(data)) {
+    throw new Error('Dataset entropy requires array data');
+  }
+
+  // Create histogram (10 bins)
+  const bins = options.bins || 10;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const binWidth = (max - min) / bins;
+
+  const counts = new Array(bins).fill(0);
+  data.forEach(value => {
+    const bin = Math.min(Math.floor((value - min) / binWidth), bins - 1);
+    counts[bin]++;
+  });
+
+  const probabilities = counts.map(c => c / data.length);
+  const entropy = shannonEntropy(probabilities);
+  const maxEntropy = Math.log2(bins);
+
+  return {
+    dataset_entropy: entropy,
+    max_entropy: maxEntropy,
+    normalized_entropy: maxEntropy > 0 ? entropy / maxEntropy : 0,
+    bins: bins,
+    data_points: data.length,
+    optimal_proof_bits: Math.ceil(entropy * data.length),
+    interpretation: interpretDataComplexity(entropy)
+  };
+}
+
+// Core Shannon entropy calculation
+function shannonEntropy(probabilities) {
+  return probabilities
+    .filter(p => p > 0)
+    .reduce((sum, p) => sum - p * Math.log2(p), 0);
+}
+
+// Persistence entropy calculation
+function persistenceEntropyCalc(intervals) {
+  if (intervals.length === 0) return 0;
+  const total = intervals.reduce((a, b) => a + b, 0);
+  if (total === 0) return 0;
+  const probabilities = intervals.map(i => i / total);
+  return shannonEntropy(probabilities);
+}
+
+// Interpretation functions
+function interpretEntropy(normalized) {
+  if (normalized > 0.9) return 'Very high entropy - highly uniform distribution';
+  if (normalized > 0.7) return 'High entropy - diverse distribution';
+  if (normalized > 0.5) return 'Moderate entropy - some structure present';
+  if (normalized > 0.3) return 'Low entropy - clear patterns';
+  return 'Very low entropy - highly structured/deterministic';
+}
+
+function interpretComplexity(score) {
+  if (score > 0.8) return 'Very complex topology with diverse features';
+  if (score > 0.6) return 'Complex topology with multiple features';
+  if (score > 0.4) return 'Moderate topological complexity';
+  if (score > 0.2) return 'Simple topology with few features';
+  return 'Very simple topology';
+}
+
+function interpretDiversity(entropy) {
+  if (entropy > 2.0) return 'Highly diverse operations';
+  if (entropy > 1.5) return 'Diverse operations';
+  if (entropy > 1.0) return 'Moderate diversity';
+  if (entropy > 0.5) return 'Low diversity';
+  return 'Very low diversity - repetitive operations';
+}
+
+function interpretDataComplexity(entropy) {
+  if (entropy > 3.0) return 'Highly complex data with diverse values';
+  if (entropy > 2.0) return 'Complex data distribution';
+  if (entropy > 1.0) return 'Moderate data complexity';
+  if (entropy > 0.5) return 'Simple data distribution';
+  return 'Very simple or uniform data';
 }
 
 // Helper function

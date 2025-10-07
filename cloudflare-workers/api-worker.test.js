@@ -388,8 +388,160 @@ describe('Error Handling', () => {
     });
     const worker = await import('./api-worker.js');
     const response = await worker.default.fetch(request, mockEnv);
-    
+
     expect(response.status).toBeGreaterThanOrEqual(400);
+  });
+});
+
+describe('Entropy Analysis Endpoint', () => {
+  it('should compute Shannon entropy for probability distribution', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: [0.25, 0.25, 0.25, 0.25],
+      analysis_type: 'shannon'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.result.shannon_entropy).toBeCloseTo(2.0, 1); // log2(4) = 2
+    expect(data.result.normalized_entropy).toBeCloseTo(1.0, 1);
+  });
+
+  it('should compute Shannon entropy from count data', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: [1, 1, 1, 1, 2, 2, 2, 2],
+      analysis_type: 'shannon'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.result.shannon_entropy).toBeCloseTo(1.0, 1); // Binary distribution
+  });
+
+  it('should compute topological entropy', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: [1.0, 2.0, 3.0, 4.0, 5.0],
+      analysis_type: 'topological'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.result.persistence_entropy).toBeGreaterThan(0);
+    expect(data.result.complexity_score).toBeGreaterThanOrEqual(0);
+    expect(data.result.complexity_score).toBeLessThanOrEqual(1);
+  });
+
+  it('should compute provenance entropy', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: {
+        operations: [
+          { type: 'generation' },
+          { type: 'retrieval' },
+          { type: 'generation' },
+          { type: 'transformation' }
+        ]
+      },
+      analysis_type: 'provenance'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.result.operation_entropy).toBeGreaterThan(0);
+    expect(data.result.operation_types).toBe(3);
+  });
+
+  it('should compute dataset entropy', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+      analysis_type: 'dataset'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.result.dataset_entropy).toBeGreaterThan(0);
+    expect(data.result.optimal_proof_bits).toBeGreaterThan(0);
+  });
+
+  it('should run comprehensive entropy analysis', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: [1.0, 2.0, 3.0, 4.0, 5.0],
+      analysis_type: 'comprehensive'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.result.shannon).toBeDefined();
+    expect(data.result.topological).toBeDefined();
+    expect(data.result.dataset).toBeDefined();
+  });
+
+  it('should reject invalid analysis type', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: [1, 2, 3],
+      analysis_type: 'invalid_type'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toContain('Unknown analysis type');
+  });
+
+  it('should reject missing data', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      analysis_type: 'shannon'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toContain('Required: data');
+  });
+
+  it('should include interpretation in results', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: [0.5, 0.5],
+      analysis_type: 'shannon'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.result.interpretation).toBeDefined();
+    expect(typeof data.result.interpretation).toBe('string');
+  });
+
+  it('should handle zero entropy case', async () => {
+    const request = createRequest('/api/v1/entropy/analyze', 'POST', {
+      data: [1.0], // Single probability = deterministic
+      analysis_type: 'shannon'
+    });
+    const worker = await import('./api-worker.js');
+    const response = await worker.default.fetch(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.result.shannon_entropy).toBe(0);
   });
 });
 
