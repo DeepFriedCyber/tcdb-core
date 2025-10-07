@@ -16,7 +16,7 @@ pub use simplicial_complex::{SimplicialComplex, Simplex};
 pub use filtration::{Filtration, FiltrationValue};
 pub use persistent_homology::{PersistentHomology, Barcode, PersistenceDiagram};
 pub use topology::{EmbeddingCapture, TopologicalSignature, VietorisRips};
-pub use provenance::{ProvenanceTracker, ReasoningStep, OperationType, ProvenanceGraph};
+pub use provenance::{ProvenanceTracker, ReasoningStep, OperationType, ProvenanceGraph, Certificate, hash_persistence_diagram};
 pub use data_proof::{DataFingerprint, DataProver, ModelAuditor, Dataset};
 pub use cross_domain::{DomainMapper, PrincipleTransferEngine, DomainStructure};
 pub use entropy::{shannon_entropy, persistence_entropy, normalized_entropy, self_information};

@@ -1,10 +1,11 @@
 //! Provenance System
-//! 
+//!
 //! Implements provenance tracking for AI reasoning steps and operations.
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
+use blake3::Hasher;
 
 /// Types of operations that can be tracked
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -591,5 +592,318 @@ mod tests {
 
         let surprising = tracker.most_surprising_steps();
         assert_eq!(surprising.len(), 2);
+    }
+}
+
+// ============================================================================
+// PROVENANCE CERTIFICATES
+// ============================================================================
+
+/// Hash bytes using BLAKE3
+fn hash_bytes(bytes: &[u8]) -> String {
+    let mut h = Hasher::new();
+    h.update(bytes);
+    h.finalize().to_hex().to_string()
+}
+
+/// Canonical serialization of a persistence diagram as (birth,death) sorted then hashed
+pub fn hash_persistence_diagram(mut pd: Vec<(f64, f64)>) -> String {
+    pd.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    // Stable, locale-free formatting with 17 decimal places (full f64 precision)
+    let s = pd
+        .into_iter()
+        .map(|(b, d)| format!("{:.17},{:.17};", b, d))
+        .collect::<String>();
+    hash_bytes(s.as_bytes())
+}
+
+/// Minimal provenance certificate that binds: data, code, and math result.
+///
+/// This creates a cryptographically verifiable link between:
+/// - Input data (via content-addressed identifier)
+/// - Code version (via git commit or semver)
+/// - Mathematical result (via canonical hash of persistence diagram)
+///
+/// # Properties
+///
+/// - **Deterministic**: Same inputs always produce same certificate
+/// - **Verifiable**: Anyone can recompute and verify the certificate
+/// - **Immutable**: Certificate cannot be forged or modified
+/// - **Auditable**: Full chain of custody from data → code → result
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Certificate {
+    /// Immutable content ID for the input (e.g., SHA256 of bytes, or IPFS CID)
+    pub data_cid: String,
+
+    /// Version of the algorithm/code (git commit hash or semver)
+    pub code_rev: String,
+
+    /// Canonical hash of the persistence diagram (sorted, deduped)
+    pub result_hash: String,
+}
+
+impl Certificate {
+    /// Create a new certificate from data CID, code revision, and persistence diagram
+    ///
+    /// # Arguments
+    ///
+    /// * `data_cid` - Content identifier for input data (e.g., "sha256:abc123...")
+    /// * `code_rev` - Code version (e.g., "v1.0.0" or git commit "a1b2c3d")
+    /// * `pd` - Persistence diagram as vector of (birth, death) pairs
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use tcdb_core::provenance::Certificate;
+    ///
+    /// let pd = vec![(0.0, 1.0), (0.5, 2.0)];
+    /// let cert = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+    /// ```
+    pub fn new(data_cid: impl Into<String>, code_rev: impl Into<String>, pd: &[(f64, f64)]) -> Self {
+        Self {
+            data_cid: data_cid.into(),
+            code_rev: code_rev.into(),
+            result_hash: hash_persistence_diagram(pd.to_vec()),
+        }
+    }
+
+    /// Bind all fields into a single audit token
+    ///
+    /// This creates a single hash that represents the entire certificate.
+    /// Any change to data_cid, code_rev, or result_hash will produce a different token.
+    ///
+    /// # Returns
+    ///
+    /// BLAKE3 hash of the JSON-serialized certificate
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use tcdb_core::provenance::Certificate;
+    ///
+    /// let pd = vec![(0.0, 1.0)];
+    /// let cert = Certificate::new("sha256:abc", "v1.0.0", &pd);
+    /// let token = cert.audit_token();
+    /// assert_eq!(token.len(), 64); // BLAKE3 produces 32-byte (64-char hex) hash
+    /// ```
+    pub fn audit_token(&self) -> String {
+        hash_bytes(serde_json::to_string(self).unwrap().as_bytes())
+    }
+
+    /// Verify that a persistence diagram matches this certificate
+    ///
+    /// # Arguments
+    ///
+    /// * `pd` - Persistence diagram to verify
+    ///
+    /// # Returns
+    ///
+    /// `true` if the diagram hash matches the certificate, `false` otherwise
+    pub fn verify_result(&self, pd: &[(f64, f64)]) -> bool {
+        self.result_hash == hash_persistence_diagram(pd.to_vec())
+    }
+}
+
+#[cfg(test)]
+mod certificate_tests {
+    use super::*;
+
+    #[test]
+    fn test_hash_bytes() {
+        let hash1 = hash_bytes(b"hello");
+        let hash2 = hash_bytes(b"hello");
+        let hash3 = hash_bytes(b"world");
+
+        assert_eq!(hash1, hash2, "Same input should produce same hash");
+        assert_ne!(hash1, hash3, "Different input should produce different hash");
+        assert_eq!(hash1.len(), 64, "BLAKE3 hash should be 64 hex chars");
+    }
+
+    #[test]
+    fn test_hash_persistence_diagram_deterministic() {
+        let pd1 = vec![(0.0, 1.0), (0.5, 2.0)];
+        let pd2 = vec![(0.0, 1.0), (0.5, 2.0)];
+
+        let hash1 = hash_persistence_diagram(pd1);
+        let hash2 = hash_persistence_diagram(pd2);
+
+        assert_eq!(hash1, hash2, "Same diagram should produce same hash");
+    }
+
+    #[test]
+    fn test_hash_persistence_diagram_order_independent() {
+        let pd1 = vec![(0.0, 1.0), (0.5, 2.0)];
+        let pd2 = vec![(0.5, 2.0), (0.0, 1.0)]; // Different order
+
+        let hash1 = hash_persistence_diagram(pd1);
+        let hash2 = hash_persistence_diagram(pd2);
+
+        assert_eq!(hash1, hash2, "Order should not affect hash (canonical sorting)");
+    }
+
+    #[test]
+    fn test_hash_persistence_diagram_different_values() {
+        let pd1 = vec![(0.0, 1.0), (0.5, 2.0)];
+        let pd2 = vec![(0.0, 1.0), (0.5, 2.1)]; // Slightly different
+
+        let hash1 = hash_persistence_diagram(pd1);
+        let hash2 = hash_persistence_diagram(pd2);
+
+        assert_ne!(hash1, hash2, "Different values should produce different hash");
+    }
+
+    #[test]
+    fn test_certificate_creation() {
+        let pd = vec![(0.0, 1.0), (0.5, 2.0)];
+        let cert = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+
+        assert_eq!(cert.data_cid, "sha256:abc123");
+        assert_eq!(cert.code_rev, "v1.0.0");
+        assert!(!cert.result_hash.is_empty());
+    }
+
+    #[test]
+    fn test_certificate_deterministic() {
+        let pd = vec![(0.0, 1.0), (0.5, 2.0)];
+
+        let cert1 = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+        let cert2 = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+
+        assert_eq!(cert1, cert2, "Same inputs should produce same certificate");
+        assert_eq!(cert1.result_hash, cert2.result_hash);
+    }
+
+    #[test]
+    fn test_certificate_different_data() {
+        let pd = vec![(0.0, 1.0)];
+
+        let cert1 = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+        let cert2 = Certificate::new("sha256:def456", "v1.0.0", &pd);
+
+        assert_ne!(cert1, cert2, "Different data CID should produce different certificate");
+        assert_eq!(cert1.result_hash, cert2.result_hash, "But result hash should be same");
+    }
+
+    #[test]
+    fn test_certificate_different_code() {
+        let pd = vec![(0.0, 1.0)];
+
+        let cert1 = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+        let cert2 = Certificate::new("sha256:abc123", "v2.0.0", &pd);
+
+        assert_ne!(cert1, cert2, "Different code version should produce different certificate");
+        assert_eq!(cert1.result_hash, cert2.result_hash, "But result hash should be same");
+    }
+
+    #[test]
+    fn test_certificate_different_result() {
+        let pd1 = vec![(0.0, 1.0)];
+        let pd2 = vec![(0.0, 2.0)];
+
+        let cert1 = Certificate::new("sha256:abc123", "v1.0.0", &pd1);
+        let cert2 = Certificate::new("sha256:abc123", "v1.0.0", &pd2);
+
+        assert_ne!(cert1, cert2, "Different result should produce different certificate");
+        assert_ne!(cert1.result_hash, cert2.result_hash);
+    }
+
+    #[test]
+    fn test_audit_token_deterministic() {
+        let pd = vec![(0.0, 1.0)];
+        let cert = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+
+        let token1 = cert.audit_token();
+        let token2 = cert.audit_token();
+
+        assert_eq!(token1, token2, "Audit token should be deterministic");
+        assert_eq!(token1.len(), 64, "BLAKE3 hash should be 64 hex chars");
+    }
+
+    #[test]
+    fn test_audit_token_different_certificates() {
+        let pd = vec![(0.0, 1.0)];
+
+        let cert1 = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+        let cert2 = Certificate::new("sha256:def456", "v1.0.0", &pd);
+
+        let token1 = cert1.audit_token();
+        let token2 = cert2.audit_token();
+
+        assert_ne!(token1, token2, "Different certificates should have different tokens");
+    }
+
+    #[test]
+    fn test_verify_result_correct() {
+        let pd = vec![(0.0, 1.0), (0.5, 2.0)];
+        let cert = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+
+        assert!(cert.verify_result(&pd), "Should verify correct result");
+    }
+
+    #[test]
+    fn test_verify_result_incorrect() {
+        let pd1 = vec![(0.0, 1.0), (0.5, 2.0)];
+        let pd2 = vec![(0.0, 1.0), (0.5, 2.1)]; // Different
+
+        let cert = Certificate::new("sha256:abc123", "v1.0.0", &pd1);
+
+        assert!(!cert.verify_result(&pd2), "Should reject incorrect result");
+    }
+
+    #[test]
+    fn test_verify_result_order_independent() {
+        let pd1 = vec![(0.0, 1.0), (0.5, 2.0)];
+        let pd2 = vec![(0.5, 2.0), (0.0, 1.0)]; // Different order
+
+        let cert = Certificate::new("sha256:abc123", "v1.0.0", &pd1);
+
+        assert!(cert.verify_result(&pd2), "Should verify regardless of order");
+    }
+
+    #[test]
+    fn test_certificate_serialization() {
+        let pd = vec![(0.0, 1.0)];
+        let cert = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+
+        // Serialize to JSON
+        let json = serde_json::to_string(&cert).unwrap();
+
+        // Deserialize back
+        let cert2: Certificate = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(cert, cert2, "Certificate should survive serialization round-trip");
+    }
+
+    #[test]
+    fn test_full_workflow() {
+        // Simulate full workflow: data → computation → certificate → verification
+
+        // 1. Input data
+        let data = b"some input data";
+        let data_cid = format!("sha256:{}", hash_bytes(data));
+
+        // 2. Code version
+        let code_rev = "v1.0.0";
+
+        // 3. Compute result (persistence diagram)
+        let pd = vec![(0.0, 1.0), (0.5, 2.0), (1.0, 3.0)];
+
+        // 4. Create certificate
+        let cert = Certificate::new(&data_cid, code_rev, &pd);
+
+        // 5. Get audit token
+        let token = cert.audit_token();
+
+        // 6. Serialize certificate (for storage/transmission)
+        let json = serde_json::to_string(&cert).unwrap();
+
+        // 7. Later: deserialize and verify
+        let cert_loaded: Certificate = serde_json::from_str(&json).unwrap();
+        assert_eq!(cert_loaded.audit_token(), token, "Token should match");
+        assert!(cert_loaded.verify_result(&pd), "Result should verify");
+
+        // 8. Verify fails with wrong result
+        let wrong_pd = vec![(0.0, 1.0), (0.5, 2.1)];
+        assert!(!cert_loaded.verify_result(&wrong_pd), "Wrong result should fail");
     }
 }
