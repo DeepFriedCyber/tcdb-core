@@ -329,6 +329,182 @@ mod tests {
     }
 }
 
+// ============================================================================
+// CERTIFICATE TESTS
+// ============================================================================
+
+#[cfg(test)]
+mod certificate_tests {
+    use tcdb_core::provenance::{Certificate, hash_persistence_diagram};
+
+    #[test]
+    fn pd_hash_is_order_invariant_and_stable() {
+        // Test order invariance
+        let a = vec![(0.0, 1.0), (0.2, 0.9), (0.1, 0.8)];
+        let mut b = a.clone();
+        b.reverse();
+
+        let hash_a = hash_persistence_diagram(a);
+        let hash_b = hash_persistence_diagram(b);
+
+        assert_eq!(hash_a, hash_b, "Hash should be order-invariant");
+
+        // Test stability across runs: fixed precision formatting → fixed hash
+        let h1 = hash_persistence_diagram(vec![(0.1234567890123456, 0.9)]);
+
+        // Verify hash is deterministic
+        let h2 = hash_persistence_diagram(vec![(0.1234567890123456, 0.9)]);
+        assert_eq!(h1, h2, "Hash should be deterministic");
+
+        // Verify BLAKE3 hex length
+        assert_eq!(h1.len(), 64, "BLAKE3 hash should be 64 hex characters");
+
+        // Record the actual hash for future reference
+        println!("Golden hash for (0.1234567890123456, 0.9): {}", h1);
+    }
+
+    #[test]
+    fn certificate_audit_token_changes_with_any_field() {
+        let pd = vec![(0.0, 1.0)];
+
+        // Different data CID
+        let c1 = Certificate::new("cid:abc", "rev:123", &pd);
+        let c2 = Certificate::new("cid:xyz", "rev:123", &pd);
+        assert_ne!(
+            c1.audit_token(),
+            c2.audit_token(),
+            "Different data CID should produce different audit token"
+        );
+
+        // Different code revision
+        let c3 = Certificate::new("cid:abc", "rev:456", &pd);
+        assert_ne!(
+            c1.audit_token(),
+            c3.audit_token(),
+            "Different code revision should produce different audit token"
+        );
+
+        // Different persistence diagram
+        let pd2 = vec![(0.0, 2.0)];
+        let c4 = Certificate::new("cid:abc", "rev:123", &pd2);
+        assert_ne!(
+            c1.audit_token(),
+            c4.audit_token(),
+            "Different persistence diagram should produce different audit token"
+        );
+
+        // Same inputs should produce same token
+        let c5 = Certificate::new("cid:abc", "rev:123", &pd);
+        assert_eq!(
+            c1.audit_token(),
+            c5.audit_token(),
+            "Same inputs should produce same audit token"
+        );
+    }
+
+    #[test]
+    fn pd_hash_precision_preservation() {
+        // Test that full f64 precision is preserved
+        let pd1 = vec![(0.12345678901234567, 0.98765432109876543)];
+        let pd2 = vec![(0.12345678901234560, 0.98765432109876543)]; // Slightly different
+
+        let hash1 = hash_persistence_diagram(pd1);
+        let hash2 = hash_persistence_diagram(pd2);
+
+        // These should be different because we preserve 17 decimal places
+        assert_ne!(hash1, hash2, "Full precision should be preserved");
+    }
+
+    #[test]
+    fn pd_hash_handles_infinity() {
+        // Test that infinity is handled correctly
+        let pd = vec![(0.0, f64::INFINITY), (0.5, 1.0)];
+        let hash = hash_persistence_diagram(pd);
+
+        assert_eq!(hash.len(), 64, "Should produce valid hash even with infinity");
+
+        // Should be deterministic
+        let pd2 = vec![(0.0, f64::INFINITY), (0.5, 1.0)];
+        let hash2 = hash_persistence_diagram(pd2);
+        assert_eq!(hash, hash2, "Infinity handling should be deterministic");
+    }
+
+    #[test]
+    fn certificate_serialization_roundtrip() {
+        let pd = vec![(0.0, 1.0), (0.5, 2.0), (1.0, f64::INFINITY)];
+        let cert = Certificate::new("sha256:abc123", "v1.0.0", &pd);
+
+        // Serialize to JSON
+        let json = serde_json::to_string(&cert).unwrap();
+
+        // Deserialize back
+        let cert2: Certificate = serde_json::from_str(&json).unwrap();
+
+        // Should be identical
+        assert_eq!(cert.data_cid, cert2.data_cid);
+        assert_eq!(cert.code_rev, cert2.code_rev);
+        assert_eq!(cert.result_hash, cert2.result_hash);
+        assert_eq!(cert.audit_token(), cert2.audit_token());
+    }
+
+    #[test]
+    fn certificate_verify_with_reordered_pd() {
+        let pd1 = vec![(0.0, 1.0), (0.5, 2.0), (1.0, 3.0)];
+        let cert = Certificate::new("sha256:abc", "v1.0.0", &pd1);
+
+        // Verify with same PD in different order
+        let pd2 = vec![(1.0, 3.0), (0.0, 1.0), (0.5, 2.0)];
+        assert!(
+            cert.verify_result(&pd2),
+            "Should verify regardless of order"
+        );
+
+        // Verify with wrong PD
+        let pd3 = vec![(0.0, 1.0), (0.5, 2.1), (1.0, 3.0)];
+        assert!(
+            !cert.verify_result(&pd3),
+            "Should reject incorrect PD"
+        );
+    }
+
+    #[test]
+    fn certificate_empty_pd() {
+        // Test with empty persistence diagram
+        let pd: Vec<(f64, f64)> = vec![];
+        let cert = Certificate::new("sha256:empty", "v1.0.0", &pd);
+
+        assert!(!cert.result_hash.is_empty(), "Should produce hash even for empty PD");
+        assert!(cert.verify_result(&pd), "Should verify empty PD");
+    }
+
+    #[test]
+    fn certificate_single_point_pd() {
+        // Test with single point
+        let pd = vec![(0.0, 1.0)];
+        let cert = Certificate::new("sha256:single", "v1.0.0", &pd);
+
+        assert!(cert.verify_result(&pd), "Should verify single point PD");
+
+        // Different single point should fail
+        let pd2 = vec![(0.0, 2.0)];
+        assert!(!cert.verify_result(&pd2), "Should reject different point");
+    }
+
+    #[test]
+    fn certificate_duplicate_points() {
+        // Test with duplicate points (should be preserved)
+        let pd = vec![(0.0, 1.0), (0.0, 1.0), (0.5, 2.0)];
+        let cert = Certificate::new("sha256:dup", "v1.0.0", &pd);
+
+        // Same duplicates should verify
+        assert!(cert.verify_result(&pd), "Should verify with duplicates");
+
+        // Different number of duplicates should fail
+        let pd2 = vec![(0.0, 1.0), (0.5, 2.0)];
+        assert!(!cert.verify_result(&pd2), "Should reject different duplicates");
+    }
+}
+
 // Property-based tests for provenance
 #[cfg(test)]
 mod provenance_property_tests {

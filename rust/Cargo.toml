@@ -18,6 +18,7 @@ serde_json.workspace = true
 thiserror.workspace = true
 uuid = { version = "1.0", features = ["v4", "serde"] }
 blake3 = "1.5"
+ordered-float = "4.2"
 
 # Python bindings
 pyo3 = { version = "0.22", features = ["extension-module"] }

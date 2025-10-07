@@ -10,6 +10,11 @@ pub mod provenance;
 pub mod data_proof;
 pub mod cross_domain;
 pub mod entropy;
+pub mod reasoner;
+pub mod embed;
+pub mod streaming;
+pub mod bayes;
+pub mod euler;
 pub mod bindings;
 
 pub use simplicial_complex::{SimplicialComplex, Simplex};
@@ -20,6 +25,11 @@ pub use provenance::{ProvenanceTracker, ReasoningStep, OperationType, Provenance
 pub use data_proof::{DataFingerprint, DataProver, ModelAuditor, Dataset};
 pub use cross_domain::{DomainMapper, PrincipleTransferEngine, DomainStructure};
 pub use entropy::{shannon_entropy, persistence_entropy, normalized_entropy, self_information};
+pub use reasoner::{Constraint, BettiCurve, PD, Violation, check};
+pub use embed::{landscape_features, landscape_features_auto, landscape_distance, landscape_similarity};
+pub use streaming::Streamer;
+pub use bayes::{Evidence, Posterior, posterior, sequential_update};
+pub use euler::FVector;
 
 use thiserror::Error;
 
