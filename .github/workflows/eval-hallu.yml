@@ -1,0 +1,82 @@
+name: LLM Hallucination Prevention Evaluation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  eval-hallucination:
+    name: Evaluate Hallucination Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            rust/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Build Rust library
+        run: |
+          cd rust
+          cargo build --release
+      
+      - name: Install maturin
+        run: pip install maturin
+      
+      - name: Build Python bindings
+        run: maturin develop --release
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest numpy
+      
+      - name: Run hallucination evaluation
+        run: |
+          python examples/eval/hallucination_eval.py
+      
+      - name: Run minimal hallucination evaluation
+        run: |
+          python examples/eval/minimal_hallucination_eval.py
+      
+      - name: Upload evaluation results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: hallucination-eval-results
+          path: examples/eval/eval_results.json
+          retention-days: 30
+      
+      - name: Check evaluation success
+        run: |
+          if [ -f examples/eval/eval_results.json ]; then
+            echo "✓ Evaluation completed successfully"
+            cat examples/eval/eval_results.json | python -m json.tool
+          else
+            echo "✗ Evaluation failed - no results file generated"
+            exit 1
+          fi
+
