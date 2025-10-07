@@ -1,0 +1,292 @@
+{
+  "metrics": {
+    "total": 21,
+    "correct": 21,
+    "accuracy": 1.0,
+    "true_positives": 11,
+    "false_positives": 0,
+    "true_negatives": 10,
+    "false_negatives": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0
+  },
+  "results": [
+    {
+      "item_id": "topo_001",
+      "description": "LLM claims wrong Euler characteristic for sphere",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "euler_mismatch",
+      "violations": [
+        {
+          "type": "euler_mismatch",
+          "claimed": 5,
+          "actual": 2,
+          "severity": "high"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "topo_002",
+      "description": "LLM correctly identifies sphere topology",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "topo_003",
+      "description": "LLM claims negative Betti number",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "negative_betti",
+      "violations": [
+        {
+          "type": "negative_betti",
+          "dimension": "0",
+          "value": -5,
+          "severity": "critical"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "topo_004",
+      "description": "LLM claims wrong Euler characteristic for torus",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "euler_mismatch",
+      "violations": [
+        {
+          "type": "euler_mismatch",
+          "claimed": 3,
+          "actual": 0,
+          "severity": "high"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "topo_005",
+      "description": "LLM correctly identifies torus topology",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "pd_001",
+      "description": "LLM claims death before birth in persistence diagram",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "death_before_birth",
+      "violations": [
+        {
+          "type": "death_before_birth",
+          "birth": 0.5,
+          "death": 0.3,
+          "severity": "critical"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "pd_002",
+      "description": "LLM provides valid persistence diagram",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "bayes_001",
+      "description": "LLM is overconfident with weak evidence",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "overconfident",
+      "violations": [
+        {
+          "type": "overconfident",
+          "claimed": 0.99,
+          "actual": 0.014925373134328358,
+          "deviation": 0.9750746268656716,
+          "severity": "medium"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "bayes_002",
+      "description": "LLM confidence matches Bayesian posterior",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "bayes_003",
+      "description": "LLM is underconfident with strong evidence",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "underconfident",
+      "violations": [
+        {
+          "type": "underconfident",
+          "claimed": 0.1,
+          "actual": 0.95,
+          "deviation": 0.85,
+          "severity": "low"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "prov_001",
+      "description": "LLM provides fake hash",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "hash_mismatch",
+      "violations": [
+        {
+          "type": "hash_mismatch",
+          "claimed": "def456fake",
+          "expected": "abc123real",
+          "severity": "critical"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "prov_002",
+      "description": "LLM provides correct hash",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "reason_001",
+      "description": "LLM claims impossible similarity > 1.0",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "impossible_similarity",
+      "violations": [
+        {
+          "type": "impossible_similarity",
+          "value": 1.5,
+          "severity": "critical"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "reason_002",
+      "description": "LLM provides valid similarity",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "reason_003",
+      "description": "LLM claims mean outside range",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "impossible_statistics",
+      "violations": [
+        {
+          "type": "impossible_statistics",
+          "mean": 50.0,
+          "range": [
+            -10.0,
+            10.0
+          ],
+          "severity": "critical"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "reason_004",
+      "description": "LLM provides valid statistics",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "complex_001",
+      "description": "LLM makes multiple errors (wrong chi + overconfident)",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "multiple",
+      "violations": [
+        {
+          "type": "euler_mismatch",
+          "claimed": 5,
+          "actual": 2,
+          "severity": "high"
+        },
+        {
+          "type": "overconfident",
+          "claimed": 0.99,
+          "actual": 0.01,
+          "deviation": 0.98,
+          "severity": "medium"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "complex_002",
+      "description": "LLM provides fully correct analysis",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "edge_001",
+      "description": "LLM claims negative similarity",
+      "expected_violation": true,
+      "detected_violation": true,
+      "violation_type": "impossible_similarity",
+      "violations": [
+        {
+          "type": "impossible_similarity",
+          "value": -0.5,
+          "severity": "critical"
+        }
+      ],
+      "correct": true
+    },
+    {
+      "item_id": "edge_002",
+      "description": "LLM claims similarity exactly 0.0 (valid)",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    },
+    {
+      "item_id": "edge_003",
+      "description": "LLM claims similarity exactly 1.0 (valid)",
+      "expected_violation": false,
+      "detected_violation": false,
+      "violation_type": "none",
+      "violations": [],
+      "correct": true
+    }
+  ]
+}

@@ -13,6 +13,15 @@ help:
 	@echo "  make dev          - Install in development mode"
 	@echo "  make clean        - Clean build artifacts"
 	@echo "  make all          - Build everything and run all tests"
+	@echo ""
+	@echo "Development:"
+	@echo "  make format       - Format code (Rust + Python)"
+	@echo "  make lint         - Lint code"
+	@echo "  make bench        - Run performance benchmarks"
+	@echo "  make docs         - Build and open documentation"
+	@echo ""
+	@echo "LLM Safety:"
+	@echo "  make eval-hallu   - Run hallucination detection evaluation"
 
 build:
 	@echo "🔨 Building Rust library..."
@@ -76,4 +85,13 @@ bench:
 docs:
 	@echo "📚 Building documentation..."
 	cd rust && cargo doc --no-deps --open
+
+# LLM Hallucination Prevention
+eval-hallu:
+	@echo "🛡️  Running LLM hallucination evaluation..."
+	@python examples/eval/hallucination_eval.py
+
+eval-hallu-verbose:
+	@echo "🛡️  Running LLM hallucination evaluation (verbose)..."
+	@python examples/eval/hallucination_eval.py --verbose
 
