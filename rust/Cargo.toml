@@ -32,3 +32,7 @@ uuid = { version = "1.0", features = ["v4"] }
 name = "persistent_homology"
 harness = false
 
+[[bench]]
+name = "new_features"
+harness = false
+
