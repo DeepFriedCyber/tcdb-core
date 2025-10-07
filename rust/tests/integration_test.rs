@@ -36,20 +36,17 @@ fn test_tetrahedron_complex() {
 
 #[test]
 fn test_filtration_monotonicity() {
-    let mut complex = SimplicialComplex::new();
-    complex.add_simplex(Simplex::new(vec![0, 1, 2])).unwrap();
-    
-    let mut filtration = Filtration::new(complex);
-    
-    // Set values respecting monotonicity
-    filtration.set_value(Simplex::new(vec![0]), 0.0).unwrap();
-    filtration.set_value(Simplex::new(vec![1]), 0.0).unwrap();
-    filtration.set_value(Simplex::new(vec![2]), 0.0).unwrap();
-    filtration.set_value(Simplex::new(vec![0, 1]), 1.0).unwrap();
-    filtration.set_value(Simplex::new(vec![0, 2]), 1.0).unwrap();
-    filtration.set_value(Simplex::new(vec![1, 2]), 1.0).unwrap();
-    filtration.set_value(Simplex::new(vec![0, 1, 2]), 2.0).unwrap();
-    
+    let mut filtration = Filtration::new();
+
+    // Add simplices respecting monotonicity (faces before higher-dimensional simplices)
+    filtration.add_simplex(0.0, Simplex::new(vec![0])).unwrap();
+    filtration.add_simplex(0.0, Simplex::new(vec![1])).unwrap();
+    filtration.add_simplex(0.0, Simplex::new(vec![2])).unwrap();
+    filtration.add_simplex(1.0, Simplex::new(vec![0, 1])).unwrap();
+    filtration.add_simplex(1.0, Simplex::new(vec![0, 2])).unwrap();
+    filtration.add_simplex(1.0, Simplex::new(vec![1, 2])).unwrap();
+    filtration.add_simplex(2.0, Simplex::new(vec![0, 1, 2])).unwrap();
+
     assert!(filtration.verify_monotonicity());
 }
 
