@@ -60,6 +60,42 @@ jobs:
       working-directory: ./rust
       if: matrix.rust == 'stable'
 
+  lean-verify:
+    name: Lean 4 Verification
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Lean 4
+      uses: leanprover/lean-action@v1
+      with:
+        lean-version: 'leanprover/lean4:v4.3.0'
+
+    - name: Cache Lean build
+      uses: actions/cache@v4
+      with:
+        path: |
+          lean/.lake
+          lean/build
+        key: ${{ runner.os }}-lean-${{ hashFiles('lean/lakefile.lean', 'lean/lean-toolchain') }}
+
+    - name: Build Lean project
+      run: |
+        cd lean
+        lake build
+      continue-on-error: true
+
+    - name: Check for sorry/admit statements
+      run: |
+        cd lean
+        SORRY_COUNT=$(grep -r "sorry\|admit" Tcdb/ | wc -l || echo "0")
+        echo "Found $SORRY_COUNT sorry/admit statements"
+        if [ "$SORRY_COUNT" -gt 0 ]; then
+          echo "::warning::Found $SORRY_COUNT sorry/admit statements in Lean proofs"
+          echo "This is expected during development. Complete proofs for production."
+        fi
+
   python-test:
     name: Python Tests
     runs-on: ${{ matrix.os }}

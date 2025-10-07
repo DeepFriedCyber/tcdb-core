@@ -7,6 +7,12 @@ use pyo3::exceptions::PyValueError;
 use pyo3::types::PyModule;
 use crate::{Simplex, SimplicialComplex, Filtration, PersistenceDiagram};
 use crate::persistent_homology::PersistencePoint;
+// Reasoner types (for future use)
+// use crate::reasoner::{Constraint, BettiCurve, PD, Violation};
+use crate::embed::{landscape_features, landscape_features_auto, landscape_distance, landscape_similarity};
+use crate::streaming::Streamer;
+use crate::bayes::{Evidence, Posterior, posterior, sequential_update};
+use crate::euler::FVector;
 
 /// Python wrapper for Simplex
 #[pyclass(name = "Simplex")]
@@ -207,14 +213,277 @@ impl PyPersistenceDiagram {
     }
 }
 
+/// Python wrapper for FVector (Euler characteristic)
+#[pyclass(name = "FVector")]
+pub struct PyFVector {
+    inner: FVector,
+}
+
+#[pymethods]
+impl PyFVector {
+    #[new]
+    fn new(faces: Vec<usize>) -> Self {
+        Self {
+            inner: FVector::new(faces),
+        }
+    }
+
+    #[staticmethod]
+    fn empty() -> Self {
+        Self {
+            inner: FVector::empty(),
+        }
+    }
+
+    #[staticmethod]
+    fn point() -> Self {
+        Self {
+            inner: FVector::point(),
+        }
+    }
+
+    #[staticmethod]
+    fn interval() -> Self {
+        Self {
+            inner: FVector::interval(),
+        }
+    }
+
+    #[staticmethod]
+    fn triangle() -> Self {
+        Self {
+            inner: FVector::triangle(),
+        }
+    }
+
+    #[staticmethod]
+    fn tetrahedron() -> Self {
+        Self {
+            inner: FVector::tetrahedron(),
+        }
+    }
+
+    fn euler_characteristic(&self) -> i64 {
+        self.inner.euler_characteristic()
+    }
+
+    fn disjoint_union(&self, other: &PyFVector) -> PyFVector {
+        PyFVector {
+            inner: self.inner.disjoint_union(&other.inner),
+        }
+    }
+
+    fn get_face_count(&self, k: usize) -> usize {
+        self.inner.get_face_count(k)
+    }
+
+    fn max_dimension(&self) -> usize {
+        self.inner.max_dimension()
+    }
+
+    fn __repr__(&self) -> String {
+        format!("FVector(chi={})", self.inner.euler_characteristic())
+    }
+}
+
+/// Python wrapper for Evidence (Bayesian)
+#[pyclass(name = "Evidence")]
+#[derive(Clone)]
+pub struct PyEvidence {
+    inner: Evidence,
+}
+
+#[pymethods]
+impl PyEvidence {
+    #[new]
+    fn new(like_h: f64, like_not_h: f64) -> Self {
+        Self {
+            inner: Evidence::new(like_h, like_not_h),
+        }
+    }
+
+    #[getter]
+    fn like_h(&self) -> f64 {
+        self.inner.like_h
+    }
+
+    #[getter]
+    fn like_not_h(&self) -> f64 {
+        self.inner.like_not_h
+    }
+
+    fn likelihood_ratio(&self) -> f64 {
+        self.inner.likelihood_ratio()
+    }
+
+    fn supports_h(&self) -> bool {
+        self.inner.supports_h()
+    }
+
+    fn is_neutral(&self, epsilon: f64) -> bool {
+        self.inner.is_neutral(epsilon)
+    }
+
+    fn __repr__(&self) -> String {
+        format!("Evidence(like_h={:.2}, like_not_h={:.2})",
+                self.inner.like_h, self.inner.like_not_h)
+    }
+}
+
+/// Python wrapper for Posterior (Bayesian)
+#[pyclass(name = "Posterior")]
+pub struct PyPosterior {
+    inner: Posterior,
+}
+
+#[pymethods]
+impl PyPosterior {
+    #[getter]
+    fn prior(&self) -> f64 {
+        self.inner.prior
+    }
+
+    #[getter]
+    fn posterior(&self) -> f64 {
+        self.inner.posterior
+    }
+
+    #[getter]
+    fn evidence(&self) -> PyEvidence {
+        PyEvidence {
+            inner: self.inner.evidence.clone(),
+        }
+    }
+
+    fn belief_change(&self) -> f64 {
+        self.inner.belief_change()
+    }
+
+    fn posterior_odds(&self) -> f64 {
+        self.inner.posterior_odds()
+    }
+
+    fn bayes_factor(&self) -> f64 {
+        self.inner.bayes_factor()
+    }
+
+    fn __repr__(&self) -> String {
+        format!("Posterior(prior={:.2}, posterior={:.2})",
+                self.inner.prior, self.inner.posterior)
+    }
+}
+
+/// Python wrapper for Streamer
+#[pyclass(name = "Streamer")]
+pub struct PyStreamer {
+    inner: Streamer,
+}
+
+#[pymethods]
+impl PyStreamer {
+    #[new]
+    fn new(max_len: usize) -> Self {
+        Self {
+            inner: Streamer::new(max_len),
+        }
+    }
+
+    fn push(&mut self, sample: (f64, f64)) {
+        self.inner.push(sample);
+    }
+
+    fn pd(&self) -> Vec<(f64, f64)> {
+        self.inner.pd()
+    }
+
+    fn statistics(&self) -> Option<(f64, f64, f64, f64)> {
+        self.inner.statistics()
+    }
+
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    fn clear(&mut self) {
+        self.inner.clear();
+    }
+
+    fn __repr__(&self) -> String {
+        format!("Streamer(len={})", self.inner.len())
+    }
+}
+
+/// Python functions for Bayesian inference
+#[pyfunction]
+fn py_posterior(prior: f64, evidence: &PyEvidence) -> PyPosterior {
+    PyPosterior {
+        inner: posterior(prior, evidence.inner.clone()),
+    }
+}
+
+#[pyfunction]
+fn py_sequential_update(prior: f64, evidence: Vec<PyEvidence>) -> PyPosterior {
+    let evidence_vec: Vec<Evidence> = evidence.iter().map(|e| e.inner.clone()).collect();
+    PyPosterior {
+        inner: sequential_update(prior, &evidence_vec),
+    }
+}
+
+/// Python functions for landscape embeddings
+#[pyfunction]
+fn py_landscape_features(
+    pd: Vec<(f64, f64)>,
+    levels: usize,
+    samples: usize,
+    tmin: f64,
+    tmax: f64,
+) -> Vec<f64> {
+    landscape_features(&pd, levels, samples, tmin, tmax)
+}
+
+#[pyfunction]
+fn py_landscape_features_auto(pd: Vec<(f64, f64)>, levels: usize, samples: usize) -> Vec<f64> {
+    landscape_features_auto(&pd, levels, samples)
+}
+
+#[pyfunction]
+fn py_landscape_distance(f1: Vec<f64>, f2: Vec<f64>) -> f64 {
+    landscape_distance(&f1, &f2)
+}
+
+#[pyfunction]
+fn py_landscape_similarity(f1: Vec<f64>, f2: Vec<f64>) -> f64 {
+    landscape_similarity(&f1, &f2)
+}
+
 /// Python module definition
 #[pymodule]
 fn tcdb_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    // Original classes
     m.add_class::<PySimplex>()?;
     m.add_class::<PySimplicialComplex>()?;
     m.add_class::<PyFiltration>()?;
     m.add_class::<PyPersistencePoint>()?;
     m.add_class::<PyPersistenceDiagram>()?;
+
+    // New classes
+    m.add_class::<PyFVector>()?;
+    m.add_class::<PyEvidence>()?;
+    m.add_class::<PyPosterior>()?;
+    m.add_class::<PyStreamer>()?;
+
+    // Functions
+    m.add_function(wrap_pyfunction!(py_posterior, m)?)?;
+    m.add_function(wrap_pyfunction!(py_sequential_update, m)?)?;
+    m.add_function(wrap_pyfunction!(py_landscape_features, m)?)?;
+    m.add_function(wrap_pyfunction!(py_landscape_features_auto, m)?)?;
+    m.add_function(wrap_pyfunction!(py_landscape_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_landscape_similarity, m)?)?;
+
     Ok(())
 }
 
