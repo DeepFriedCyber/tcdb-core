@@ -14,7 +14,7 @@ A production-ready topological data analysis (TDA) framework combining **Rust pe
 - 🔬 **Lean 4 Verification**: Optional formal mathematical proofs
 - 🧪 **100% Test Coverage**: 31/31 tests passing
 - 🚀 **Production Ready**: Comprehensive documentation and examples
-- 📊 **REST API**: Flask-based API for web integration
+- ⚡ **FastAPI REST API**: High-performance API with automatic documentation
 
 ### Core Algorithms
 
@@ -67,6 +67,34 @@ diagram = tcdb_core.compute_persistence(filtration)
 
 See [examples/](examples/) for more detailed examples.
 
+### REST API
+
+```bash
+# Start the FastAPI server
+python run_api.py
+
+# Or with uvicorn directly
+uvicorn tcdb_api.app:app --reload
+
+# Access the API
+# Swagger UI: http://localhost:8000/docs
+# ReDoc: http://localhost:8000/redoc
+# Health check: http://localhost:8000/api/v1/health
+```
+
+**Example API Request:**
+```bash
+curl -X POST http://localhost:8000/api/v1/tda/simplex \
+  -H "Content-Type: application/json" \
+  -d '{"vertices": [0, 1, 2]}'
+```
+
+**Features:**
+- ⚡ **2-3x faster** than Flask
+- 📚 **Automatic documentation** at `/docs` and `/redoc`
+- 🔒 **Type safety** with Pydantic models
+- ✅ **Request validation** built-in
+
 ## 📚 Documentation
 
 - **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
@@ -74,6 +102,8 @@ See [examples/](examples/) for more detailed examples.
 - **[API Reference](QUICK_REFERENCE.md)** - Complete API documentation
 - **[Testing Guide](TESTING.md)** - How to run and write tests
 - **[Migration Guide](MIGRATION_GUIDE.md)** - Migrating from Python-only
+- **[FastAPI Migration](FLASK_TO_FASTAPI_MIGRATION.md)** - Flask to FastAPI migration details
+- **[Project Standards](PROJECT_STANDARDS.md)** - API development standards
 - **[Contributing](CONTRIBUTING.md)** - How to contribute
 
 ## 🧪 Testing

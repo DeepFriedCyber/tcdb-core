@@ -9,7 +9,10 @@ setup(
     packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[
-        "flask>=2.0.0",
+        "fastapi>=0.104.0",
+        "uvicorn[standard]>=0.24.0",
+        "pydantic>=2.0.0",
+        "slowapi>=0.1.9",
         "gudhi>=3.5.0",
         "numpy>=1.21.0",
         "scikit-learn>=1.0.0",
