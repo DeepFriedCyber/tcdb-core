@@ -1,10 +1,12 @@
 //! Persistent Homology Computation
-//! 
+//!
 //! Implements the standard algorithm for computing persistence diagrams.
 //! Correctness verified in lean/Tcdb/PersistentHomology/
 
-use crate::{Result, Filtration};
+use crate::{Filtration, Result, Simplex};
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::HashMap;
 
 /// A point in a persistence diagram
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -76,12 +78,8 @@ pub struct Barcode {
 
 impl From<&PersistenceDiagram> for Barcode {
     fn from(diagram: &PersistenceDiagram) -> Self {
-        let intervals = diagram
-            .points
-            .iter()
-            .map(|p| (p.birth, p.death))
-            .collect();
-        
+        let intervals = diagram.points.iter().map(|p| (p.birth, p.death)).collect();
+
         Self {
             dimension: diagram.dimension,
             intervals,
@@ -101,31 +99,34 @@ impl PersistentHomology {
     }
 
     /// Compute persistence diagrams for all dimensions
-    /// 
+    ///
     /// # Algorithm
     /// Uses the standard persistence algorithm with matrix reduction
     /// Correctness proven in: lean/Tcdb/PersistentHomology/Algorithm.lean
     pub fn compute(&self) -> Result<Vec<PersistenceDiagram>> {
         let max_dim = self.filtration.max_dimension();
-        let mut diagrams = Vec::new();
+        let pairs = self.persistence_pairs()?;
+        let mut diagrams: Vec<PersistenceDiagram> =
+            (0..=max_dim).map(PersistenceDiagram::new).collect();
 
-        for dim in 0..=max_dim {
-            diagrams.push(self.compute_dimension(dim)?);
+        for diagram in &mut diagrams {
+            if let Some(points) = pairs.get(&diagram.dimension) {
+                diagram.points = points.clone();
+            }
         }
 
+        diagrams.sort_by_key(|d| d.dimension);
         Ok(diagrams)
     }
 
     /// Compute persistence diagram for a specific dimension
-    fn compute_dimension(&self, dimension: usize) -> Result<PersistenceDiagram> {
-        let diagram = PersistenceDiagram::new(dimension);
+    pub fn compute_dimension(&self, dimension: usize) -> Result<PersistenceDiagram> {
+        let mut diagram = PersistenceDiagram::new(dimension);
+        let pairs = self.persistence_pairs()?;
+        if let Some(points) = pairs.get(&dimension) {
+            diagram.points = points.clone();
+        }
 
-        // Simplified algorithm for demonstration
-        // Full implementation would use matrix reduction
-        
-        // For now, return empty diagram
-        // TODO: Implement full persistence algorithm
-        
         Ok(diagram)
     }
 
@@ -149,9 +150,123 @@ impl PersistentHomology {
     }
 }
 
+impl PersistentHomology {
+    /// Compute persistence pairs using matrix reduction algorithm
+    fn persistence_pairs(&self) -> Result<HashMap<usize, Vec<PersistencePoint>>> {
+        let ordered = self.filtration.ordered_simplices();
+        let mut simplex_indices: HashMap<Simplex, usize> = HashMap::new();
+        let mut columns: Vec<Vec<usize>> = vec![Vec::new(); ordered.len()];
+        let mut low_inverse: HashMap<usize, usize> = HashMap::new();
+        let mut births: HashMap<usize, f64> = HashMap::new();
+        let mut diagrams: HashMap<usize, Vec<PersistencePoint>> = HashMap::new();
+
+        for (idx, (value, simplex)) in ordered.iter().enumerate() {
+            let mut column: Vec<usize> = simplex
+                .faces()
+                .into_iter()
+                .filter_map(|face| simplex_indices.get(&face).copied())
+                .collect();
+            column.sort_unstable();
+            column.dedup();
+
+            while let Some(&low) = column.last() {
+                if let Some(&other_idx) = low_inverse.get(&low) {
+                    let other_column = columns[other_idx].clone();
+                    column = Self::xor_columns(column, &other_column);
+                } else {
+                    break;
+                }
+            }
+
+            if column.is_empty() {
+                births.insert(idx, *value);
+            } else {
+                let low = *column.last().expect("column is non-empty");
+                low_inverse.insert(low, idx);
+                let birth_value = births.remove(&low).unwrap_or_else(|| ordered[low].0);
+                let birth_dim = ordered[low].1.dimension();
+
+                diagrams
+                    .entry(birth_dim)
+                    .or_default()
+                    .push(PersistencePoint {
+                        birth: birth_value,
+                        death: *value,
+                        dimension: birth_dim,
+                    });
+            }
+
+            columns[idx] = column;
+            simplex_indices.insert(simplex.clone(), idx);
+        }
+
+        for (birth_idx, birth_value) in births {
+            let birth_dim = ordered[birth_idx].1.dimension();
+            diagrams
+                .entry(birth_dim)
+                .or_default()
+                .push(PersistencePoint {
+                    birth: birth_value,
+                    death: f64::INFINITY,
+                    dimension: birth_dim,
+                });
+        }
+
+        for points in diagrams.values_mut() {
+            points.sort_by(|a, b| match a.birth.partial_cmp(&b.birth) {
+                Some(Ordering::Equal) => a.death.partial_cmp(&b.death).unwrap_or(Ordering::Equal),
+                Some(order) => order,
+                None => Ordering::Equal,
+            });
+        }
+
+        Ok(diagrams)
+    }
+
+    /// XOR two columns (symmetric difference for Z/2Z coefficients)
+    fn xor_columns(mut left: Vec<usize>, right: &[usize]) -> Vec<usize> {
+        let mut result = Vec::with_capacity(left.len() + right.len());
+        left.sort_unstable();
+        let mut right_sorted: Vec<usize> = right.to_vec();
+        right_sorted.sort_unstable();
+
+        let mut i = 0;
+        let mut j = 0;
+
+        while i < left.len() || j < right_sorted.len() {
+            match (left.get(i), right_sorted.get(j)) {
+                (Some(&l), Some(&r)) if l == r => {
+                    i += 1;
+                    j += 1;
+                }
+                (Some(&l), Some(&r)) if l < r => {
+                    result.push(l);
+                    i += 1;
+                }
+                (Some(&_l), Some(&r)) => {
+                    result.push(r);
+                    j += 1;
+                }
+                (Some(&l), None) => {
+                    result.push(l);
+                    i += 1;
+                }
+                (None, Some(&r)) => {
+                    result.push(r);
+                    j += 1;
+                }
+                (None, None) => break,
+            }
+        }
+
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{Filtration, Simplex};
 
     #[test]
     fn test_persistence_point_creation() {
@@ -210,10 +325,67 @@ mod tests {
         let mut diagram = PersistenceDiagram::new(1);
         diagram.add_point(0.0, 1.0);
         diagram.add_point(0.5, 2.0);
-        
+
         let barcode = Barcode::from(&diagram);
         assert_eq!(barcode.intervals.len(), 2);
         assert_eq!(barcode.dimension, 1);
     }
-}
 
+    #[test]
+    fn test_persistent_homology_interval() {
+        let mut filtration = Filtration::new();
+        filtration.add_simplex(0.0, Simplex::new(vec![0])).unwrap();
+        filtration.add_simplex(0.0, Simplex::new(vec![1])).unwrap();
+        filtration
+            .add_simplex(1.0, Simplex::new(vec![0, 1]))
+            .unwrap();
+
+        let ph = PersistentHomology::new(filtration);
+        let diagrams = ph.compute().unwrap();
+        let dim0 = diagrams.into_iter().find(|d| d.dimension == 0).unwrap();
+
+        assert_eq!(dim0.points.len(), 2);
+
+        let infinite_components = dim0.points.iter().filter(|p| p.is_infinite()).count();
+        assert_eq!(infinite_components, 1);
+
+        let finite = dim0
+            .points
+            .iter()
+            .find(|p| p.death.is_finite())
+            .expect("expected a finite persistence pair");
+
+        assert!((finite.birth - 0.0).abs() < 1e-9);
+        assert!((finite.death - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_persistent_homology_triangle_loop() {
+        let mut filtration = Filtration::new();
+        filtration.add_simplex(0.0, Simplex::new(vec![0])).unwrap();
+        filtration.add_simplex(0.0, Simplex::new(vec![1])).unwrap();
+        filtration.add_simplex(0.0, Simplex::new(vec![2])).unwrap();
+        filtration
+            .add_simplex(1.0, Simplex::new(vec![0, 1]))
+            .unwrap();
+        filtration
+            .add_simplex(1.2, Simplex::new(vec![1, 2]))
+            .unwrap();
+        filtration
+            .add_simplex(1.4, Simplex::new(vec![0, 2]))
+            .unwrap();
+        filtration
+            .add_simplex(2.0, Simplex::new(vec![0, 1, 2]))
+            .unwrap();
+
+        let ph = PersistentHomology::new(filtration);
+        let diagrams = ph.compute().unwrap();
+        let dim1 = diagrams.into_iter().find(|d| d.dimension == 1).unwrap();
+
+        assert_eq!(dim1.points.len(), 1);
+
+        let feature = &dim1.points[0];
+        assert!((feature.birth - 1.4).abs() < 1e-9);
+        assert!((feature.death - 2.0).abs() < 1e-9);
+    }
+}
