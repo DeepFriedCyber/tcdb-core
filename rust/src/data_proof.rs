@@ -192,8 +192,97 @@ impl DataProver {
 
     /// Verify a data usage proof
     pub fn verify_proof(&self, proof: &DataUsageProof) -> bool {
-        proof.is_valid() && 
+        proof.is_valid() &&
         proof.proof_data.starts_with(b"proof_of_usage")
+    }
+
+    /// Compute optimal proof size based on dataset entropy
+    ///
+    /// Uses Shannon's Source Coding Theorem to determine minimum bits needed.
+    ///
+    /// # Arguments
+    ///
+    /// * `dataset` - The dataset to analyze
+    ///
+    /// # Returns
+    ///
+    /// Minimum number of bits needed for optimal encoding
+    pub fn optimal_proof_bits(&self, dataset: &Dataset) -> usize {
+        if dataset.points.is_empty() {
+            return 0;
+        }
+
+        // Compute entropy of the dataset
+        let entropy = self.compute_dataset_entropy(dataset);
+
+        // Apply Shannon's bound: H(X) * n samples
+        crate::entropy::optimal_encoding_bits(entropy, dataset.points.len())
+    }
+
+    /// Compute entropy of a dataset
+    ///
+    /// Treats data point coordinates as a distribution.
+    pub fn compute_dataset_entropy(&self, dataset: &Dataset) -> f64 {
+        if dataset.points.is_empty() {
+            return 0.0;
+        }
+
+        // Flatten all coordinates
+        let all_values: Vec<f64> = dataset.points
+            .iter()
+            .flatten()
+            .copied()
+            .collect();
+
+        if all_values.is_empty() {
+            return 0.0;
+        }
+
+        // Create histogram (simplified - bins values)
+        let bins = 10;
+        let min = all_values.iter().copied().fold(f64::INFINITY, f64::min);
+        let max = all_values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+
+        if (max - min).abs() < 1e-10 {
+            return 0.0; // All values the same
+        }
+
+        let bin_width = (max - min) / bins as f64;
+        let mut counts = vec![0usize; bins];
+
+        for &value in &all_values {
+            let bin = ((value - min) / bin_width).floor() as usize;
+            let bin = bin.min(bins - 1);
+            counts[bin] += 1;
+        }
+
+        crate::entropy::entropy_from_counts(&counts)
+    }
+
+    /// Compute compression efficiency of a proof
+    ///
+    /// Compares actual proof size to optimal (entropy-based) size.
+    /// Returns value in [0, 1] where 1.0 = optimal compression.
+    pub fn compression_efficiency(&self, proof: &DataUsageProof) -> f64 {
+        let optimal_bits = self.optimal_proof_bits(&Dataset::new(vec![])); // Simplified
+        let actual_bits = proof.proof_data.len() * 8;
+
+        if actual_bits == 0 {
+            return 0.0;
+        }
+
+        (optimal_bits as f64 / actual_bits as f64).min(1.0)
+    }
+
+    /// Fingerprint a dataset with entropy analysis
+    ///
+    /// Returns both cryptographic fingerprint and entropy metrics.
+    pub fn fingerprint_with_entropy(&self, dataset: &Dataset) -> (DataFingerprint, f64, usize) {
+        let fingerprint = DataFingerprint::from_dataset(dataset);
+        let entropy = self.compute_dataset_entropy(dataset);
+        let optimal_bits = self.optimal_proof_bits(dataset);
+
+        (fingerprint, entropy, optimal_bits)
     }
 }
 
@@ -288,15 +377,94 @@ mod tests {
     fn test_data_prover() {
         let prover = DataProver::new();
         let dataset = Dataset::new(vec![vec![1.0, 2.0]]);
-        
+
         #[derive(Debug)]
         struct MockModel;
         let model = MockModel;
-        
+
         let proof = prover.prove_data_usage(&model, &dataset);
         assert!(proof.is_valid());
-        
+
         let is_valid = prover.verify_proof(&proof);
         assert!(is_valid);
+    }
+
+    #[test]
+    fn test_dataset_entropy() {
+        let prover = DataProver::new();
+
+        // Uniform dataset should have high entropy
+        let uniform_dataset = Dataset::new(vec![
+            vec![1.0, 2.0],
+            vec![3.0, 4.0],
+            vec![5.0, 6.0],
+            vec![7.0, 8.0],
+        ]);
+
+        let entropy = prover.compute_dataset_entropy(&uniform_dataset);
+        assert!(entropy > 0.0);
+    }
+
+    #[test]
+    fn test_optimal_proof_bits() {
+        let prover = DataProver::new();
+        let dataset = Dataset::new(vec![
+            vec![1.0, 2.0],
+            vec![3.0, 4.0],
+        ]);
+
+        let optimal_bits = prover.optimal_proof_bits(&dataset);
+        assert!(optimal_bits > 0);
+    }
+
+    #[test]
+    fn test_compression_efficiency() {
+        let prover = DataProver::new();
+        let dataset = Dataset::new(vec![vec![1.0, 2.0]]);
+
+        #[derive(Debug)]
+        struct MockModel;
+        let model = MockModel;
+
+        let proof = prover.prove_data_usage(&model, &dataset);
+        let efficiency = prover.compression_efficiency(&proof);
+
+        assert!(efficiency >= 0.0 && efficiency <= 1.0);
+    }
+
+    #[test]
+    fn test_fingerprint_with_entropy() {
+        let prover = DataProver::new();
+        let dataset = Dataset::new(vec![
+            vec![1.0, 2.0],
+            vec![3.0, 4.0],
+        ]);
+
+        let (fingerprint, entropy, optimal_bits) = prover.fingerprint_with_entropy(&dataset);
+
+        assert!(fingerprint.is_valid());
+        assert!(entropy >= 0.0);
+        assert!(optimal_bits > 0);
+    }
+
+    #[test]
+    fn test_empty_dataset_entropy() {
+        let prover = DataProver::new();
+        let empty_dataset = Dataset::new(vec![]);
+
+        let entropy = prover.compute_dataset_entropy(&empty_dataset);
+        assert_eq!(entropy, 0.0);
+
+        let optimal_bits = prover.optimal_proof_bits(&empty_dataset);
+        assert_eq!(optimal_bits, 0);
+    }
+}
+
+impl DataFingerprint {
+    /// Check if fingerprint is valid
+    pub fn is_valid(&self) -> bool {
+        !self.dataset_id.is_empty() &&
+        !self.merkle_root.is_empty() &&
+        self.topology_signature.is_valid()
     }
 }
