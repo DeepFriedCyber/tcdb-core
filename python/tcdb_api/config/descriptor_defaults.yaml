@@ -1,0 +1,60 @@
+# Default configuration for descriptor modules
+
+# Topological-Information Descriptor (TID)
+tid:
+  max_dimension: 2
+  max_edge_length: null  # Auto-computed if null
+  n_bins: 100
+  alpha_weights:
+    0: 1.0  # H0 weight
+    1: 1.0  # H1 weight
+    2: 1.0  # H2 weight
+  beta_weights:
+    0: 1.0  # TV0 weight
+    1: 1.0  # TV1 weight
+    2: 1.0  # TV2 weight
+  gamma_weights:
+    0: 1.0  # L0 weight
+    1: 1.0  # L1 weight
+    2: 1.0  # L2 weight
+
+# Diffusion-Geometry Descriptor (DGD)
+dgd:
+  graph_type: 'knn'  # 'knn' or 'epsilon'
+  k_neighbors: 5
+  epsilon: null  # Auto-computed if null
+  n_time_samples: 20
+  time_range: [0.01, 10.0]
+  weight_a: 1.0  # φ1 weight
+  weight_b: 1.0  # φ2 weight
+  use_sparse: true
+
+# Kernel Mean Embedding Divergence (KME-Δ)
+kme_delta:
+  kernel_type: 'rbf'  # 'rbf' or 'laplacian'
+  sigma_scales: [0.1, 0.5, 1.0, 2.0, 5.0]
+  reference_type: 'uniform'  # 'uniform', 'gaussian', 'subsample', 'data'
+  reference_data: null
+  scale_weights: [1.0, 1.0, 1.0, 1.0, 1.0]
+
+# Graph-Scattering Energy Ratio (GSER)
+gser:
+  n_scales: 4
+  graph_type: 'knn'
+  k_neighbors: 5
+  signal_type: 'coordinates'  # 'coordinates', 'degrees', 'random'
+  scale_weights: null  # Equal weights if null
+
+# Common settings
+common:
+  min_points: 3
+  random_seed: 42
+  verbose: false
+  
+# API settings
+api:
+  max_points: 10000  # Maximum points per request
+  timeout_seconds: 300
+  cache_results: true
+  cache_ttl_seconds: 3600
+

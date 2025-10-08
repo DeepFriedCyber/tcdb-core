@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}TCDB Core - Topological Computation Database{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>TCDB Core</h1>
+        <p class="subtitle">Production-Ready Topological Descriptors for LLM, Cyber, and Bio Analysis</p>
+        <div class="hero-buttons">
+            <a href="/auth/signup" class="btn-primary btn-large">Get Started</a>
+            <a href="/docs" class="btn-secondary btn-large">View API Docs</a>
+        </div>
+    </div>
+</div>
+
+<div class="features">
+    <div class="container">
+        <h2>Patent-Clean Topological Descriptors</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>📊 Four Descriptor Families</h3>
+                <p><strong>TID</strong> (Topological-Information), <strong>DGD</strong> (Diffusion-Geometry), <strong>KME-Δ</strong> (Kernel Mean Embedding), <strong>GSER</strong> (Graph-Scattering) - all dimensionless and scale-invariant.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🤖 LLM Analysis</h3>
+                <p>Detect semantic drift, analyze attention patterns, and monitor embedding topology in transformer models.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🔒 Cybersecurity</h3>
+                <p>Network anomaly detection, traffic pattern analysis, and behavioral drift monitoring for security operations.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🧬 Bioinformatics</h3>
+                <p>Protein conformational analysis, MD trajectory comparison, and ensemble diversity quantification.</p>
+            </div>
+            <div class="feature-card">
+                <h3>⚡ High Performance</h3>
+                <p>Efficient algorithms with up to 10x speedup: exact, Lanczos, and stochastic methods for different scales.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🔐 Production Ready</h3>
+                <p>54+ tests passing, comprehensive docs, type-safe APIs, and domain-specific adapters.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="domain-adapters" style="background: var(--surface); padding: 60px 0;">
+    <div class="container">
+        <h2 style="text-align: center; color: var(--text-primary);">Domain-Specific Adapters</h2>
+        <p style="text-align: center; margin-bottom: 40px; color: var(--text-secondary);">
+            High-level interfaces for common use cases - minimal dependencies, maximum productivity
+        </p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>🧠 LLM Adapter</h3>
+                <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; font-size: 12px; overflow-x: auto;"><code>from tcdb_api.adapters import LLMAdapter
+
+adapter = LLMAdapter(client)
+drift = adapter.detect_drift(
+    current_embeddings,
+    baseline_embeddings,
+    threshold=0.5
+)
+# Returns: drift_detected, drift_score</code></pre>
+            </div>
+            <div class="feature-card">
+                <h3>🛡️ Cyber Adapter</h3>
+                <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; font-size: 12px; overflow-x: auto;"><code>from tcdb_api.adapters import CyberAdapter
+
+adapter = CyberAdapter(client, n_nodes=100)
+anomaly = adapter.detect_anomaly(
+    edges,
+    node_signal=failed_logins
+)
+# Returns: anomaly_detected, scores</code></pre>
+            </div>
+            <div class="feature-card">
+                <h3>🧬 Bio Adapter</h3>
+                <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; font-size: 12px; overflow-x: auto;"><code>from tcdb_api.adapters import BioAdapter
+
+adapter = BioAdapter(client)
+change = adapter.analyze_conformational_change(
+    coords_list,
+    ref_coords_list
+)
+# Returns: significant_change, drift_score</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="api-preview">
+    <div class="container">
+        <h2>Quick Start</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+            <div>
+                <h3 style="margin-bottom: 15px;">Simple API (Unified Endpoint)</h3>
+                <div class="code-block">
+                    <pre><code># Minimal dependencies
+pip install requests numpy scipy
+
+# Single endpoint for all descriptors
+import requests
+
+response = requests.post(
+    "http://localhost:8000/descriptor/compute",
+    json={
+        "name": "kme_delta",
+        "params": {"sigmas": [1.0, 2.0]},
+        "X": [[0,0], [1,0], [0,1]]
+    }
+)
+
+print(response.json())
+# {'KME_delta_F': 0.42, ...}</code></pre>
+                </div>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 15px;">Domain Adapters (High-Level)</h3>
+                <div class="code-block">
+                    <pre><code># Install adapters
+pip install tcdb-core
+
+# Use domain-specific interface
+from tcdb_api.adapters import LLMAdapter, DescriptorClient
+
+client = DescriptorClient("http://localhost:8000")
+adapter = LLMAdapter(client)
+
+# Detect semantic drift
+drift = adapter.detect_drift(
+    current_embeddings,
+    baseline_embeddings,
+    threshold=0.5
+)
+
+if drift["drift_detected"]:
+    print(f"⚠️ Drift: {drift['drift_score']:.3f}")</code></pre>
+                </div>
+            </div>
+        </div>
+        <p class="text-center">
+            <a href="/auth/signup" style="margin-right: 20px;">Sign up to get your API key →</a>
+            <a href="/docs">View full API documentation →</a>
+        </p>
+    </div>
+</div>
+
+<div style="background: var(--background); padding: 60px 0;">
+    <div class="container">
+        <h2 style="text-align: center; color: var(--text-primary);">Why TCDB Descriptors?</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px;">
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                <h3 style="color: var(--text-primary);">Patent-Clean</h3>
+                <p style="color: var(--text-secondary);">Four independent mathematical formulations with no proprietary methods</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📏</div>
+                <h3 style="color: var(--text-primary);">Dimensionless</h3>
+                <p style="color: var(--text-secondary);">Scale-invariant ratios and normalized statistics for robust analysis</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">🎯</div>
+                <h3 style="color: var(--text-primary);">Multi-Scale</h3>
+                <p style="color: var(--text-secondary);">Capture structure at multiple scales from micro to macro</p>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 30px;">
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">⚡</div>
+                <h3 style="color: var(--text-primary);">High Performance</h3>
+                <p style="color: var(--text-secondary);">Up to 10x faster with efficient algorithms (exact, Lanczos, stochastic)</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">🧪</div>
+                <h3 style="color: var(--text-primary);">Well-Tested</h3>
+                <p style="color: var(--text-secondary);">54+ tests passing with comprehensive validation and error handling</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📚</div>
+                <h3 style="color: var(--text-primary);">Documented</h3>
+                <p style="color: var(--text-secondary);">10+ documentation files with examples, guides, and API references</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta">
+    <div class="container">
+        <h2>Ready to get started?</h2>
+        <p>Create an account and start using TCDB Core descriptors today.</p>
+        <div style="margin-top: 30px;">
+            <a href="/auth/signup" class="btn-primary btn-large" style="margin-right: 15px;">Create Account</a>
+            <a href="/docs" class="btn-secondary btn-large">Explore API Docs</a>
+        </div>
+        <p style="margin-top: 30px; color: var(--text-secondary);">
+            <strong style="color: var(--text-primary);">54+ tests passing</strong> • <strong style="color: var(--text-primary);">4 descriptor families</strong> • <strong style="color: var(--text-primary);">3 domain adapters</strong> • <strong style="color: var(--text-primary);">Production ready</strong>
+        </p>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TCDB Core{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container">
+        <h1>Dashboard</h1>
+        <p class="subtitle">Welcome, {{ user.email }}</p>
+        
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2>API Keys</h2>
+                <button class="btn-primary" onclick="showCreateKeyModal()">Create New Key</button>
+            </div>
+            
+            <div id="apiKeysList" class="api-keys-list">
+                <p class="loading">Loading API keys...</p>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>Quick Start</h2>
+            <p>Use your API key to make requests to the TCDB Core API:</p>
+            <div class="code-block">
+                <pre><code>curl -X POST https://api.tcdb.uk/pipeline/run \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": [[0, 0], [1, 0], [0, 1], [1, 1]],
+    "max_dimension": 2
+  }'</code></pre>
+            </div>
+            <p>
+                <a href="/docs" class="btn-secondary">View Full API Documentation →</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Create Key Modal -->
+<div id="createKeyModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create New API Key</h2>
+            <button class="modal-close" onclick="hideCreateKeyModal()">&times;</button>
+        </div>
+        <form id="createKeyForm">
+            <div class="form-group">
+                <label for="keyName">Key Name</label>
+                <input type="text" id="keyName" name="name" required placeholder="e.g., Production API">
+            </div>
+            <div class="form-error" id="createKeyError" style="display: none;"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="hideCreateKeyModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Create Key</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Show Key Modal -->
+<div id="showKeyModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>API Key Created</h2>
+            <button class="modal-close" onclick="hideShowKeyModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="warning">⚠️ Save this key now. You won't be able to see it again!</p>
+            <div class="key-display">
+                <code id="newApiKey"></code>
+                <button class="btn-secondary btn-small" onclick="copyApiKey()">Copy</button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-primary" onclick="hideShowKeyModal()">Done</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let apiKeys = [];
+
+// Load API keys on page load
+async function loadApiKeys() {
+    try {
+        const response = await fetch('/keys/');
+        if (response.ok) {
+            apiKeys = await response.json();
+            renderApiKeys();
+        } else {
+            document.getElementById('apiKeysList').innerHTML = '<p class="error">Failed to load API keys</p>';
+        }
+    } catch (error) {
+        document.getElementById('apiKeysList').innerHTML = '<p class="error">Error loading API keys</p>';
+    }
+}
+
+function renderApiKeys() {
+    const container = document.getElementById('apiKeysList');
+    
+    if (apiKeys.length === 0) {
+        container.innerHTML = '<p class="empty-state">No API keys yet. Create one to get started!</p>';
+        return;
+    }
+    
+    container.innerHTML = apiKeys.map(key => `
+        <div class="api-key-card ${key.is_active ? '' : 'inactive'}">
+            <div class="key-info">
+                <h3>${key.name}</h3>
+                <code>${key.key_preview}</code>
+                <p class="key-meta">
+                    Created: ${new Date(key.created_at).toLocaleDateString()}
+                    ${key.last_used_at ? `| Last used: ${new Date(key.last_used_at).toLocaleDateString()}` : ''}
+                </p>
+            </div>
+            <div class="key-actions">
+                ${key.is_active 
+                    ? `<button class="btn-danger btn-small" onclick="revokeKey(${key.id})">Revoke</button>`
+                    : `<button class="btn-secondary btn-small" onclick="activateKey(${key.id})">Activate</button>`
+                }
+            </div>
+        </div>
+    `).join('');
+}
+
+function showCreateKeyModal() {
+    document.getElementById('createKeyModal').style.display = 'flex';
+}
+
+function hideCreateKeyModal() {
+    document.getElementById('createKeyModal').style.display = 'none';
+    document.getElementById('createKeyForm').reset();
+    document.getElementById('createKeyError').style.display = 'none';
+}
+
+function hideShowKeyModal() {
+    document.getElementById('showKeyModal').style.display = 'none';
+}
+
+function copyApiKey() {
+    const keyText = document.getElementById('newApiKey').textContent;
+    navigator.clipboard.writeText(keyText);
+    alert('API key copied to clipboard!');
+}
+
+document.getElementById('createKeyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const errorDiv = document.getElementById('createKeyError');
+    errorDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/keys/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: formData.get('name')})
+        });
+        
+        if (response.ok) {
+            const newKey = await response.json();
+            hideCreateKeyModal();
+            
+            // Show the new key
+            document.getElementById('newApiKey').textContent = newKey.key;
+            document.getElementById('showKeyModal').style.display = 'flex';
+            
+            // Reload keys list
+            loadApiKeys();
+        } else {
+            const data = await response.json();
+            errorDiv.textContent = data.detail || 'Failed to create API key';
+            errorDiv.style.display = 'block';
+        }
+    } catch (error) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.style.display = 'block';
+    }
+});
+
+async function revokeKey(keyId) {
+    if (!confirm('Are you sure you want to revoke this API key? This cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/keys/${keyId}`, {method: 'DELETE'});
+        if (response.ok) {
+            loadApiKeys();
+        } else {
+            alert('Failed to revoke API key');
+        }
+    } catch (error) {
+        alert('Error revoking API key');
+    }
+}
+
+async function activateKey(keyId) {
+    try {
+        const response = await fetch(`/keys/${keyId}/activate`, {method: 'POST'});
+        if (response.ok) {
+            loadApiKeys();
+        } else {
+            alert('Failed to activate API key');
+        }
+    } catch (error) {
+        alert('Error activating API key');
+    }
+}
+
+// Load keys on page load
+loadApiKeys();
+</script>
+{% endblock %}
+

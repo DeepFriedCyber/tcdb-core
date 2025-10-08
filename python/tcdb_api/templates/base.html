@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TCDB Core{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="/">TCDB Core</a>
+            </div>
+            <div class="nav-links">
+                <a href="/docs">API Docs</a>
+                {% if user %}
+                    <a href="/dashboard">Dashboard</a>
+                    <form action="/auth/logout" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-link">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="/auth/login">Login</a>
+                    <a href="/auth/signup" class="btn-primary">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 TCDB Core. Topological Computation Database.</p>
+            <p>
+                <a href="https://github.com/DeepFriedCyber/tcdb-core">GitHub</a> |
+                <a href="/docs">API Documentation</a>
+            </p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

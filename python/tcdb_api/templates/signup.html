@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - TCDB Core{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Create Account</h1>
+        <p class="subtitle">Start using TCDB Core API</p>
+        
+        <form action="/auth/signup" method="POST" id="signupForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autofocus>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="8">
+                <small>At least 8 characters</small>
+            </div>
+            
+            <div class="form-error" id="errorMessage" style="display: none;"></div>
+            <div class="form-success" id="successMessage" style="display: none;"></div>
+            
+            <button type="submit" class="btn-primary btn-block">Create Account</button>
+        </form>
+        
+        <p class="auth-footer">
+            Already have an account? <a href="/auth/login">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const errorDiv = document.getElementById('errorMessage');
+    const successDiv = document.getElementById('successMessage');
+    
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/auth/signup', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            successDiv.textContent = 'Account created! Redirecting to login...';
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                window.location.href = '/auth/login';
+            }, 1500);
+        } else {
+            errorDiv.textContent = data.detail || 'Signup failed';
+            errorDiv.style.display = 'block';
+        }
+    } catch (error) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}
+
