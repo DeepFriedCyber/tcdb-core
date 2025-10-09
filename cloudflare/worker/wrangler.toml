@@ -17,7 +17,7 @@ script_name = "tcdb-edge"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["RateLimiter"]
+new_sqlite_classes = ["RateLimiter"]
 
 # Routes - map API paths to this worker
 # Uncomment when deploying to production
