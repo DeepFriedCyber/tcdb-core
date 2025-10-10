@@ -1,0 +1,34 @@
+{
+  "demo": "embedding_provider_change",
+  "timestamp": "20251010-094238",
+  "baseline_id": "provider-change-baseline-20251010-094238",
+  "providers": [
+    {
+      "provider": "openai",
+      "dimension": 1536,
+      "tcdb_score_mean": 0.6270527515965598,
+      "tcdb_score_std": 0.40980067998545766,
+      "centroid_score": 5.583813953279391,
+      "mmd_score": 0.8215503931323345,
+      "is_compatible": false
+    },
+    {
+      "provider": "anthropic",
+      "dimension": 128,
+      "tcdb_score_mean": 0.5577246661876757,
+      "tcdb_score_std": 0.22982730840127974,
+      "centroid_score": 3.430470458655652,
+      "mmd_score": 0.31717831043974926,
+      "is_compatible": true
+    },
+    {
+      "provider": "huggingface",
+      "dimension": 768,
+      "tcdb_score_mean": 0.514973069135109,
+      "tcdb_score_std": 0.17896785201762053,
+      "centroid_score": 0.6392489168919493,
+      "mmd_score": 0.051878303289764685,
+      "is_compatible": true
+    }
+  ]
+}

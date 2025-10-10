@@ -1,0 +1,31 @@
+{
+  "demo": "model_upgrade_drift",
+  "timestamp": "20251010-094235",
+  "baseline_id": "model-upgrade-baseline-20251010-094235",
+  "scenarios": [
+    {
+      "scenario": "Minor Update (GPT-4.0 \u2192 GPT-4.1)",
+      "drift_magnitude": 0.1,
+      "tcdb_score": 0.40372264407149583,
+      "centroid_score": 10.484676058748114,
+      "mmd_score": 0.4116814110575806,
+      "needs_rebaseline": false
+    },
+    {
+      "scenario": "Major Update (GPT-4 \u2192 GPT-4.5)",
+      "drift_magnitude": 0.3,
+      "tcdb_score": 0.42490026578249596,
+      "centroid_score": 10.484387667339654,
+      "mmd_score": 0.40481254930782057,
+      "needs_rebaseline": false
+    },
+    {
+      "scenario": "Architecture Change (GPT-4 \u2192 GPT-5)",
+      "drift_magnitude": 0.6,
+      "tcdb_score": 0.42230018533154284,
+      "centroid_score": 10.483960624923157,
+      "mmd_score": 0.38904560195546284,
+      "needs_rebaseline": false
+    }
+  ]
+}

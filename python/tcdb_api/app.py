@@ -14,19 +14,20 @@ from slowapi.errors import RateLimitExceeded
 from sqlalchemy.orm import Session
 import os
 
-from .models import RootResponse, ErrorResponse
-from .routers import health, pipeline, tda, certificate, reasoner, eval, auth, keys, descriptors, descriptors_simple
+from .pydantic_models import RootResponse, ErrorResponse
+from .routers import health, pipeline, tda, certificate, reasoner, eval, auth, keys, descriptors, descriptors_simple, mvp, mvp_db
 from .database import init_db, get_db, User
 from .routers.auth import get_current_user_from_cookie
+from .settings import settings
 
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application"""
 
     app = FastAPI(
-        title="TCDB Core API",
-        description="Topological Computation Database - High-performance topological data analysis",
-        version="1.0.0",
+        title=settings.api_title,
+        description=settings.api_description,
+        version=settings.api_version,
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json"
@@ -70,6 +71,17 @@ def create_app() -> FastAPI:
     app.include_router(eval.router)
     app.include_router(descriptors.router)  # Descriptor computation (detailed API)
     app.include_router(descriptors_simple.router)  # Descriptor computation (simple unified API)
+    app.include_router(mvp.router)  # MVP API (RouteLLM feedback implementation - in-memory)
+    app.include_router(mvp_db.router)  # MVP API with database persistence
+
+    # Include addons router if enabled via config
+    if settings.addons:
+        try:
+            from tcdb_addons.router import router as addons_router
+            app.include_router(addons_router)  # Advanced features: TDA, Fisher-Rao, LGT demos
+        except ImportError:
+            import warnings
+            warnings.warn("TCDB_ADDONS=true but tcdb_addons package not found")
 
     # Homepage
     @app.get("/", response_class=HTMLResponse, tags=["pages"])
@@ -98,10 +110,11 @@ def create_app() -> FastAPI:
             rust_available = False
 
         return RootResponse(
-            name="TCDB Core API",
-            version="1.0.0",
+            name=settings.api_title,
+            version=settings.api_version,
             status="operational",
             rust_available=rust_available,
+            addons_available=settings.addons,
             docs_url="/docs",
             redoc_url="/redoc"
         )
